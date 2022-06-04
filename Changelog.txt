@@ -1,0 +1,83 @@
+1.10
+ - Added:   Detection of CodeFreak PSP IPL.
+
+1.00 (Thursday,1 August, 2009)
+ - Added:   Detection of HEN version under System Information (thanks to Davee).
+ - Added:   Detection of TA-088v3, TA-090 and TA-090v2 motherboards under System Information.
+ - Fixed:   Made a change to improve the reliability of extracting an IPL using the first option.
+ - Fixed:   If the original PSP firmware version cannot be retrieved "N/A" will be shown instead of nothing.
+ - Fixed:   Crash if circle is enter.
+ - Fixed:   The battery menu can no longer be accessed if the PSP does not support reading/writting to the battery EEPROM.
+ - Other:   Changed the wave style used.
+ - Other:   Decreased RAM usage by a massive ~2MB.
+
+0.90 (Monday, 23 February, 2009)
+ - Added:   Support for 2.71 SE and 1.50 running under Time Machine and check to disable running on 3.71.
+ - Fixed:   RSOD when choosing ‘Test M33’ feature on a DC7 MMS created with this application (only occured on Fat).
+ - Fixed:   Issue using SQUARE as part of the boot key when creating a Magic Memory Stick.
+ - Fixed:   Issue which could arise when creating more than one Magic Memory Stick in a single session. 
+ - Other:   Other Memory Sticks can now be formatted by first clicking on the format item in the menu and before answering yes to the questions insert the second Memory Stick.
+ - Other:   To reduce the risk of a BSOD when installing or running a firmware from a Magic Memory Stick the registry of a 1.50 system is now copied instead of the registry of the current system (to use the current systems registry files hold the L trigger while the Magic Memory Stick is being created.)
+ - Other:   Implemented a check for modules which are known to cause issues with PSP Tool. If any  of these modules are found a message is first shown with the modules which need to be disabled and then the PSP performs a reboot. To disable this check hold the R trigger while loading the game.
+ - Updated: Now uses VLF library 1.0 by moonlight.
+ - Updated: Updated the information shown in the System Information panels.
+
+0.80 (Saturday, 10 January, 2009)
+ - Added:   Creation of a variety of the following Magic Memory Sticks: DC3, DC4, DC5, DC7, DC8 and the original 1.50 Update Flasher by Team C+D.
+ - Added:   A Memory Stick format function to increase the amount of available IPL writable space to 1,024 KB (based on format function from Pandora Installer by Hellcat).
+ - Added:   Customizable and randomized wave colour.
+ - Fixed:   Multiple minor alterations and fixes.
+ - Fixed:   Crash when trying to use any of the flash devices over USB under DC.
+ - Other:   Files are now stored compressed in a zip archive contained within the PSAR section of the EBOOT.
+ - Other:   Sources are no longer included to reduce file size.
+ - Updated: IdStorage keys are now saved and restored to and from a single file and the integrity of the file is validated before restoration.
+ - Updated: Updated the information shown in the System Information panels.
+
+0.70 (Wednesday, 26 November, 2008)
+ - Added:   Options to check, change, backup and restore the EEPROM of the battery (based on Open Source Pandora Battery Tool by cory1492).
+ - Added:   IdStorage backup and restore options (based on IdStorage Manager by Chilly Willy)
+ - Added:   System information panel.
+ - Fixed:   If the IPL was unknown it was not shown to be unknown if various IPL functions were performed prior to checking the IPL.
+ - Fixed:   Issue injecting an IPL from a file if the file was changed through the USB connection prior to injecting the IPL.
+ - Fixed:   Improved detection of IPLs smaller than 4,096 bytes.
+
+0.60 (Tuesday, 18 November, 2008)
+ - Added:   Option to extract Memory Stick MBR.
+ - Added:   Detection of available IPL space and Memory Stick information (thanks to Torch).
+ - Added:   Option to extract entire IPL space from Memory Stick (thanks to Torch).
+ - Fixed:   Bug which caused corruption of Memory Stick when injecting an IPL larger than the  reserved space (thanks to Torch).
+ - Fixed:   Entire IPL Area is now erased from the Memory Stick (thanks to Torch).
+ - Fixed:   Issue detecting injected IPLs smaller than 4,096 bytes.
+ - Fixed:   The IPL size is only rounded up to the nearest multiple of 512 if it is not already a  multiple of 512.
+ - Other:   PRXs are now stored internally for easier installation of application.
+ - Other:   Reverted IPL injection back to style from 0.4.
+
+0.50 (Tuesday, 11 November, 2008)
+ - Added:   Added VLF (XMB) style interface.
+ - Added:   USB Connection of Memory Stick, Flash 0, Flash 1, Flash 2, Flash 3 and UMD Disc.
+ - Fixed:   Minor bug fixes and changes.
+ - Other:   Removed the last 4,096 blank bytes from the Time Machine IPL to reduce size.
+
+0.40 (Tuesday, 4 November, 2008)
+ - Fixed:   Issue injecting ms0:/ipl.bin twice in the same session.
+ - Fixed:   IPL extraction for unknown IPLs.
+ - Other:   Multiple minor alterations.
+
+0.30 (Saturday, 1 November, 2008)
+ - Added:   Support for injecting an IPL from ms0:/ipl.bin.
+ - Added:   Support for injecting Boosters Multi IPL, z3ros0ul Multi IPL and z3ros0ul Single IPL.
+ - Added:   Detection of 8 IPLs.
+ - Added:   Another method of extracting IPLs based on detection of the IPL.
+ - Added:   Option to create a checksum of the first block (4,096 bytes) of the injected Memory Stick IPL.
+ - Added:   Callbacks are now created to allow for exiting the application via the HOME button.
+ - Added:   Support for erasing the IPL from the Memory Stick.
+ - Fixed:   Increased accuracy of IPL dumps.
+
+0.20 (Friday, 31 October, 2008)
+ - Added:   Basic menu for navigating available operations.
+ - Added:   Support for injecting Time Machine IPL and Classic Pandora IPL.
+ - Fixed:   Now seeks directly to the IPL instead of reading rubbish data before dumping the IPL (thanks to Rain).
+ - Fixed:   Increased accuracy of IPL dumps (thanks to Rain).
+
+0.10 (Saturday, 21 October, 2008)
+ - Other:   Initial Release.

@@ -1,0 +1,1 @@
+random is just a file filled with blank data. Place it in C:\ to stop psp-packer generating random data when packing a module.
