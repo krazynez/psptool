@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include <libpsardumper.h>
+#include <pspdecrypt.h>
 
 /* most code here from psppet's psardumper */
 
@@ -15,7 +16,7 @@
 static int OVERHEAD;
 #define SIZE_A      0x110 /* size of uncompressed file entry = 272 bytes */
 
-int iBase, cbChunk, oldschool;
+int iBase, cbChunk, psarVersion;
 int psarPosition;
 int decrypted;
 
@@ -23,7 +24,11 @@ int decrypted;
 static void Demangle(const u8* pIn, u8* pOut)
 {
     u8 buffer[20+0x130];
+	u8 K1[0x10] = { 0xD8, 0x69, 0xB8, 0x95, 0x33, 0x6B, 0x63, 0x34, 0x98, 0xB9, 0xFC, 0x3C, 0xB7, 0x26, 0x2B, 0xD7 };
+	u8 K2[0x10] = { 0x0D, 0xA0, 0x90, 0x84, 0xAF, 0x9E, 0xB6, 0xE2, 0xD2, 0x94, 0xF2, 0xAA, 0xEF, 0x99, 0x68, 0x71 };
+	int i;
 	memcpy(buffer+20, pIn, 0x130);
+	if (psarVersion == 5) for ( i = 0; i < 0x130; ++i ) { buffer[20+i] ^= K1[i & 0xF]; }
     u32* pl = (u32*)buffer; // first 20 bytes
     pl[0] = 5;
     pl[1] = pl[2] = 0;
@@ -31,6 +36,7 @@ static void Demangle(const u8* pIn, u8* pOut)
     pl[4] = 0x130;
 
     sceUtilsBufferCopyWithRange(buffer, 20+0x130, buffer, 20+0x130, 0x7);
+	if (psarVersion == 5) for ( i = 0; i < 0x130; ++i ) { buffer[i] ^= K2[i & 0xF]; }
     memcpy(pOut, buffer, 0x130);
 }
 
@@ -54,7 +60,7 @@ static int DecodeBlock(const u8* pIn, int cbIn, u8* pOut)
     int ret;
     int cbOut;
     
-    if (!oldschool)
+    if (psarVersion != 1)
 	{
 		Demangle(pIn+0x20, pOut+0x20); // demangle the inside $130 bytes
 	}
@@ -69,8 +75,14 @@ static int DecodeBlock(const u8* pIn, int cbIn, u8* pOut)
 	}
 	else
 	{
-		Kprintf("Unknown psar tag.\n");
-		return 0xFFFFFFFC;
+		cbOut = pspDecryptPRX(pOut, pOut, cbIn);
+		if (cbOut < 0)
+		{
+			Kprintf("Unknown psar tag.\n");
+			return 0xFFFFFFFC;
+		}
+		else
+			return cbOut;
 	}	
         
     if (ret != 0)
@@ -100,7 +112,8 @@ int pspPSARInit(u8 *dataPSAR, u8 *dataOut, u8 *dataOut2)
 		OVERHEAD = 0x150;
 	}
 
-	oldschool = (dataPSAR[4] == 1); /* bogus update */
+	//oldschool = (dataPSAR[4] == 1); /* bogus update */
+	psarVersion = dataPSAR[4];
 
     int cbOut;
 	
@@ -137,7 +150,7 @@ int pspPSARInit(u8 *dataPSAR, u8 *dataOut, u8 *dataOut2)
 		return 0;
 	}
 	
-	if (!oldschool)
+	if (psarVersion != 1)
 	{
 		// second block
 		cbOut = DecodeBlock(&dataPSAR[0x10+OVERHEAD+SIZE_A], OVERHEAD+100, dataOut2);

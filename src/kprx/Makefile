@@ -18,3 +18,10 @@ LIBS = -lpsphen -lpspnand_driver -lpspumdman_driver -lpspwlan -lpspnet_adhoc -lp
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
+
+all:
+	psp-build-exports -s $(PRX_EXPORTS)
+	cp Kprx.S ../
+
+clean:
+	-rm -rf *.S *.o *.elf *.prx

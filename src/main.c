@@ -17,7 +17,7 @@
 #include <pandorafiles.h>
 #include <main.h>
 #include <common.h>
-#include <kprx\main.h>
+#include <kprx/main.h>
 
 /*
 	TODO:
@@ -25,7 +25,7 @@
 		backup and restore nand
 */
 
-PSP_MODULE_INFO("PSP Tool", 0, 1, 0);
+PSP_MODULE_INFO("Zeco Edition", 0, 1, 69);
 PSP_MAIN_THREAD_ATTR(0);
 
 char *mode = "Main";
@@ -272,6 +272,8 @@ int OnMainMenuSelect(int sel)
 		else if(sel == 3){CreateMMS("DC5");} // create despertar del cementerio 5 mms
 		else if(sel == 4){CreateMMS("DC7");} // create despertar del cementerio 7 mms
 		else if(sel == 5){CreateMMS("DC8");} // create despertar del cementerio 8 mms
+		else if(sel == 6){CreateMMS("DC9");} // create despertar del cementerio 9 mms
+		else if(sel == 7){CreateMMS("DC10");} // create despertar del cementerio 10 mms
 	}
 
 	if(waiticon != NULL){waiticon = vlfGuiRemoveShadowedPicture(waiticon);}
@@ -368,7 +370,9 @@ void MainMenu(int sel)
 						"Despertar del Cementerio v4 (3.80 M33-5)",
 						"Despertar del Cementerio v5 (3.90 M33-3)",
 						"Despertar del Cementerio v7 (4.01 M33-2)",
-						"Despertar del Cementerio v8 (5.00 M33-4)"};
+						"Despertar del Cementerio v8 (5.00 M33-4)",
+						"Despertar del Cementerio v9 (5.02 M33-5)",
+						"Despertar del Cementerio v10 (6.61 ARK-4)"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
 		selitem = 5;
 	}
@@ -911,6 +915,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 	if(!memcmp(ver, "3.8", 3) || !memcmp(ver, "3.9", 3)){table_mode = 1;}
 	else if(!memcmp(ver, "4.0", 3)){table_mode = 2;}
 	else if(!memcmp(ver, "5.0", 3)){table_mode = 3;}
+	else if(!memcmp(ver, "6.", 2)){table_mode = 4;}
 	else{table_mode = 0;}
 
 	while (1){
@@ -1350,6 +1355,54 @@ void CreateMMS(char *mmsver)
 		}
 		FinalizeMMS("/TM/DC8/ipl.bin");
 	}
+
+	else if(strcmp(mmsver, "DC9") == 0){
+        vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Balika011\nRelease Date: 18th of November 2021\nFirmware: 5.02 M33-5\n5.02 TestingTool M33\n5.00 OFW\nCompatibility: TA-092 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+        if(!FileExists("ms0:/502.PBP")){ErrorReturn("Please ensure 502.PBP exists at the root of the Memory Stick.");return;}
+
+        if(GetHardwareRevision() > 0x020201 && GetHardwareRevision != 0x020300){
+            cont = vlfGuiMessageDialog("This Magic Memory Stick software can not be installed on your PSP unit.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+            if(cont != 1){OnBackToMainMenu(0);return;}
+        }
+
+        if(DirExists("ms0:/TM/DC9")){
+            cont = vlfGuiMessageDialog("A Magic Memory Stick Software already exists at ms0:/TM/DC9 and will be overwritten by this installation.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+            if(cont != 1){OnBackToMainMenu(0);return;}
+        }
+
+        err = DumpPSAR(MODE_ENCRYPT, "ms0:/502.PBP", "ms0:/TM/DC9", "5.02", 0x120, NULL);
+        if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/502.PBP", "ms0:/TM/DC9/kd");}else{return;}
+        if(err == 0){BackupSettings("ms0:/TM/DC9/registry");}else{return;}
+
+        for(i = 0; i < sizeof(DC9files) / sizeof(DC9files[0]); i++){
+            char outname[128];
+            sprintf(outname, "ms0:/TM/DC9/%s", DC9files[i].outname);
+            SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "%s", outname);
+            zipFileExtract(ebootpath, EBOOT_PSAR, DC9files[i].inname, outname, big_buffer);
+        }
+		InjectIPL("ms0:/TM/DC9/msipl.bin", 1);
+    }
+	else if(strcmp(mmsver, "DC10") == 0){
+        vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: ARK-4 Team\nRelease Date: 20th of April 2024\nFirmware: 6.61 ARK-4\n6.61 OFW\nCompatibility: All", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+        if(!FileExists("ms0:/661.PBP")){ErrorReturn("Please ensure 661.PBP exists at the root of the Memory Stick.");return;}
+
+        if(DirExists("ms0:/TM/DCARK")){
+            cont = vlfGuiMessageDialog("A Magic Memory Stick Software already exists at ms0:/TM/DCARK and will be overwritten by this installation.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+            if(cont != 1){OnBackToMainMenu(0);return;}
+        }
+
+        err = DumpPSAR(MODE_ENCRYPT, "ms0:/661.PBP", "ms0:/TM/DCARK", "6.61", 0x120, NULL);
+        if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/661.PBP", "ms0:/TM/DCARK/kd");}else{return;}
+        if(err == 0){BackupSettings("ms0:/TM/DCARK/registry");}else{return;}
+
+        for(i = 0; i < sizeof(DC10files) / sizeof(DC10files[0]); i++){
+            char outname[128];
+            sprintf(outname, "ms0:/TM/DCARK/%s", DC10files[i].outname);
+            SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "%s", outname);
+            zipFileExtract(ebootpath, EBOOT_PSAR, DC10files[i].inname, outname, big_buffer);
+        }
+		InjectIPL("ms0:/TM/DCARK/msipl.bin", 1);
+    }
 
 	SetStatus(1, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Magic Memory Stick has been created");
 }
