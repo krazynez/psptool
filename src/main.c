@@ -886,8 +886,45 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 	int psar_pos = 0, psar_offs;
 	int table_mode;
 
-	char com_table[0x4000], _1g_table[0x4000], _2g_table[0x4000], _3g_table[0x4000];
-	int comtable_size = 0, _1gtable_size = 0, _2gtable_size = 0, _3gtable_size = 0;
+	static char com_table[0x4000];
+	static int comtable_size;
+
+	static char _1g_table[0x4000];
+	static int _1gtable_size;
+
+	static char _2g_table[0x4000];
+	static int _2gtable_size;
+
+	static char _3g_table[0x4000];
+	static int _3gtable_size;
+
+	static char _4g_table[0x4000];
+	static int _4gtable_size;
+
+	static char _5g_table[0x4000];
+	static int _5gtable_size;
+
+	static char _6g_table[0x4000];
+	static int _6gtable_size;
+
+	static char _7g_table[0x4000];
+	static int _7gtable_size;
+
+	static char _8g_table[0x4000];
+	static int _8gtable_size;
+
+	static char _9g_table[0x4000];
+	static int _9gtable_size;
+
+	static char _10g_table[0x4000];
+	static int _10gtable_size;
+
+	static char _11g_table[0x4000];
+	static int _11gtable_size;
+
+	static char _12g_table[0x4000];
+	static int _12gtable_size;
+
 
 	SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Reading EBOOT contents...");
 
@@ -915,6 +952,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 	if(!memcmp(ver, "3.8", 3) || !memcmp(ver, "3.9", 3)){table_mode = 1;}
 	else if(!memcmp(ver, "4.0", 3)){table_mode = 2;}
 	else if(!memcmp(ver, "5.0", 3)){table_mode = 3;}
+	//else if(!memcmp(ver, "6.", 2)){table_mode = 5;}
 	else if(!memcmp(ver, "6.", 2)){table_mode = 4;}
 	else{table_mode = 0;}
 
@@ -952,9 +990,17 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 				int found = 0;
 				
 				if(_1gtable_size > 0){found = FindTablePath(_1g_table, _1gtable_size, name, name);}
-
 				if(!found && _2gtable_size > 0){found = FindTablePath(_2g_table, _2gtable_size, name, name);}
 				if(!found && _3gtable_size > 0){found = FindTablePath(_3g_table, _3gtable_size, name, name);}
+				if(!found && _4gtable_size > 0){found = FindTablePath(_4g_table, _4gtable_size, name, name);}
+				if(!found && _5gtable_size > 0){found = FindTablePath(_5g_table, _5gtable_size, name, name);}
+				if(!found && _6gtable_size > 0){found = FindTablePath(_6g_table, _6gtable_size, name, name);}
+				if(!found && _7gtable_size > 0){found = FindTablePath(_7g_table, _7gtable_size, name, name);}
+				if(!found && _8gtable_size > 0){found = FindTablePath(_8g_table, _8gtable_size, name, name);}
+				if(!found && _9gtable_size > 0){found = FindTablePath(_9g_table, _9gtable_size, name, name);}
+				if(!found && _10gtable_size > 0){found = FindTablePath(_10g_table, _10gtable_size, name, name);}
+				if(!found && _11gtable_size > 0){found = FindTablePath(_11g_table, _11gtable_size, name, name);}
+				if(!found && _12gtable_size > 0){found = FindTablePath(_12g_table, _12gtable_size, name, name);}
 				if(!found){
 					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Warning: cannot find path of %s", name);
 					error = 0;
@@ -1014,7 +1060,10 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 			}	
 			else if(!strcmp(name, "01g:00000") || !strcmp(name, "00001")){
 				if(model == NULL || model == 0x000 || model == 0x100 || model == 0x120 || model == 0x103 || model == 0x123){
+
+					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Decrypting 1g table");
 					_1gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Decrypted 1g table");
 							
 					if(_1gtable_size <= 0){ErrorReturn("Unable to decrypt 1g table");sceIoClose(fd);return 1;}
 					if(_1gtable_size > sizeof(_1g_table)){ErrorReturn("1g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
@@ -1048,6 +1097,159 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 					if(_3gtable_size > sizeof(_3g_table)){ErrorReturn("3g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
 
 					memcpy(_3g_table, sm_buffer2, _3gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00004")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_4gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_4gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led04g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 4g table");
+						error = 0;
+						continue;
+					}
+
+					if(_4gtable_size > sizeof(_4g_table)){ErrorReturn("4g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_4g_table, sm_buffer2, _4gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00005")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_5gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_5gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led05g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 5g table");
+						error = 0;
+						continue;
+					}
+
+					if(_5gtable_size > sizeof(_5g_table)){ErrorReturn("5g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_5g_table, sm_buffer2, _5gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00006")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_6gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_6gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led06g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 6g table");
+						error = 0;
+						continue;
+					}
+
+					if(_6gtable_size > sizeof(_6g_table)){ErrorReturn("6g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_6g_table, sm_buffer2, _6gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00007")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_7gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_7gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led07g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 7g table");
+						error = 0;
+						continue;
+					}
+
+					if(_7gtable_size > sizeof(_7g_table)){ErrorReturn("7g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_7g_table, sm_buffer2, _7gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00008")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_8gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_8gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led08g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 8g table");
+						error = 0;
+						continue;
+					}
+
+					if(_8gtable_size > sizeof(_8g_table)){ErrorReturn("8g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_8g_table, sm_buffer2, _8gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00009")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_9gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_9gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led09g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 9g table");
+						error = 0;
+						continue;
+					}
+
+					if(_9gtable_size > sizeof(_9g_table)){ErrorReturn("9g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_9g_table, sm_buffer2, _9gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00010")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_10gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_10gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led010g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 10g table");
+						error = 0;
+						continue;
+					}
+
+					if(_10gtable_size > sizeof(_10g_table)){ErrorReturn("10g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_10g_table, sm_buffer2, _10gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00011")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_11gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_11gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led011g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 11g table");
+						error = 0;
+						continue;
+					}
+
+					if(_11gtable_size > sizeof(_11g_table)){ErrorReturn("11g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_11g_table, sm_buffer2, _11gtable_size);
+				}
+				continue;
+			}
+			else if(!strcmp(name, "00012")){
+				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+					_12gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
+							
+					if(_12gtable_size <= 0){
+						// We don't have yet the keys for table of 3000, they are only in mesg_led012g.prx
+						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 12g table");
+						error = 0;
+						continue;
+					}
+
+					if(_12gtable_size > sizeof(_12g_table)){ErrorReturn("12g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
+
+					memcpy(_12g_table, sm_buffer2, _12gtable_size);
 				}
 				continue;
 			}
@@ -1357,7 +1559,7 @@ void CreateMMS(char *mmsver)
 	}
 
 	else if(strcmp(mmsver, "DC9") == 0){
-        vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Balika011\nRelease Date: 18th of November 2021\nFirmware: 5.02 M33-5\n5.02 TestingTool M33\n5.00 OFW\nCompatibility: TA-092 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+        vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Balika011\nRelease Date: 18th of November 2021\nFirmware: 5.02 M33-5\n5.02 TestingTool M33\n5.02 OFW\nCompatibility: TA-092 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
         if(!FileExists("ms0:/502.PBP")){ErrorReturn("Please ensure 502.PBP exists at the root of the Memory Stick.");return;}
 
         if(GetHardwareRevision() > 0x020201 && GetHardwareRevision != 0x020300){
