@@ -298,7 +298,7 @@ static int DecryptPRX1(const u8* pbIn, u8* pbOut, int cbTotal, u32 tag)
 
     // step4: do the actual decryption of code block
     //  point 0x40 bytes into the buffer to key info
-    logbuffer(pbOut+0x40, cbTotal-0x40);
+    //logbuffer(pbOut+0x40, cbTotal-0x40);
     ret = sceUtilsBufferCopyWithRange(pbOut, cbTotal, pbOut+0x40, cbTotal-0x40, 0x1);
     if (ret != 0)
     {
@@ -939,7 +939,7 @@ static int DecryptPRX2(const u8 *inbuf, u8 *outbuf, u32 size, u32 tag)
 	memcpy(outbuf+0xD0, outbuf+0xD0, 0x80);
 
 	// The real decryption
-	logbuffer(outbuf+0x40, size-0x40);
+	//logbuffer(outbuf+0x40, size-0x40);
 	if (sceUtilsBufferCopyWithRange(outbuf, size, outbuf+0x40, size-0x40, 0x1) != 0)
 	{
 		Kprintf("Error in sceUtilsBufferCopyWithRange 0x1.\n");
@@ -1141,7 +1141,7 @@ int pspDecryptIPL1(const u8* pbIn, u8* pbOut, int cbIn)
 	    memcpy(g_dataTmp+0x40, pbIn, 0x1000);
         pbIn += 0x1000;
         cbIn -= 0x1000;
-				logbuffer(g_dataTmp+0x40,0x500);
+				//logbuffer(g_dataTmp+0x40,0x500);
         int ret = sceUtilsBufferCopyWithRange(g_dataTmp, 0x1040, g_dataTmp+0x40, 0x500, 1);
 	    if (ret != 0)
         {
@@ -1196,7 +1196,7 @@ int pspDecryptIPL3(const u8* pbIn, u8* pbOut, int cbIn)
     pbIn += 0x10000;
     cbIn -= 0x10000;
 	memcpy(pbOut+0x40, pbIn, cbIn);
-	logbuffer(pbOut+0x40, cbIn);
+	//logbuffer(pbOut+0x40, cbIn);
 	ret = sceUtilsBufferCopyWithRange(pbOut, cbIn+0x40, pbOut+0x40, cbIn, 1);
 	if (ret != 0)
     {
