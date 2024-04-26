@@ -45,6 +45,8 @@ char *Directories[] = {
 	"ms0:/VIDEO"
 };
 char *Quotes[] = {
+	"42 of course!",
+	"ARK-4 Team was here....",
 	"Code so clean you can eat off it.",
 	"If I can't fix it, it isn't broken.",
 	"Never test for a bug you don't know how to fix.",
@@ -96,7 +98,7 @@ static u8 g_dataOut2[2000000] __attribute__((aligned(0x40)));*/
 #define BIG_BUFFER_SIZE		10485760
 #define SMALL_BUFFER_SIZE	2000000
 
-static u8 big_buffer[BIG_BUFFER_SIZE]; 
+static u8 big_buffer[BIG_BUFFER_SIZE] __attribute__((aligned(0x40))); 
 static u8 sm_buffer1[SMALL_BUFFER_SIZE] __attribute__((aligned(0x40)));
 static u8 sm_buffer2[SMALL_BUFFER_SIZE] __attribute__((aligned(0x40)));
 

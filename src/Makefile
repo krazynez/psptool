@@ -2,7 +2,7 @@ TARGET = main
 OBJS = Kprx.o main.o common.o crt0.o
 
 INCDIR = include
-CFLAGS = -Wall -Os -G0
+CFLAGS = -Os -G0
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS) -c
 

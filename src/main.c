@@ -28,6 +28,7 @@
 PSP_MODULE_INFO("Zeco Edition", 0, 1, 69);
 PSP_MAIN_THREAD_ATTR(0);
 
+
 char *mode = "Main";
 
 char *path;
@@ -949,11 +950,14 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 		if(strcmp(ver, requiredver)){ErrorReturn("Wrong EBOOT.PBP version\nRequired Version: %s\nSupplied Version: %s", requiredver, ver);sceIoClose(fd);return 1;}
 	}
 
+	int psarVersion = 0;
+	int version = -1;
+	psarVersion = big_buffer[4];
 	if(!memcmp(ver, "3.8", 3) || !memcmp(ver, "3.9", 3)){table_mode = 1;}
 	else if(!memcmp(ver, "4.0", 3)){table_mode = 2;}
 	else if(!memcmp(ver, "5.0", 3)){table_mode = 3;}
-	//else if(!memcmp(ver, "6.", 2)){table_mode = 5;}
-	else if(!memcmp(ver, "6.", 2)){table_mode = 4;}
+	else if(!memcmp(ver, "6.", 2) && (psarVersion == 5)){table_mode = 5; version = 661;}
+	else if(!memcmp(ver, "6.", 2)){table_mode = 4; version = 661;}
 	else{table_mode = 0;}
 
 	while (1){
@@ -986,7 +990,8 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 		}
 
 		if(is5Dnum(name)){
-			if(strcmp(name, "00001") != 0 && strcmp(name, "00002") != 0 && strcmp(name, "00003") != 0){
+			//if(strcmp(name, "00001") != 0 && strcmp(name, "00002") != 0 && strcmp(name, "00003") != 0){
+			if (atoi(name) >= 100 || (atoi(name) >= 10 && version < 661)) {
 				int found = 0;
 				
 				if(_1gtable_size > 0){found = FindTablePath(_1g_table, _1gtable_size, name, name);}
@@ -1060,11 +1065,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 			}	
 			else if(!strcmp(name, "01g:00000") || !strcmp(name, "00001")){
 				if(model == NULL || model == 0x000 || model == 0x100 || model == 0x120 || model == 0x103 || model == 0x123){
-
-					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Decrypting 1g table");
 					_1gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
-					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Decrypted 1g table");
-							
 					if(_1gtable_size <= 0){ErrorReturn("Unable to decrypt 1g table");sceIoClose(fd);return 1;}
 					if(_1gtable_size > sizeof(_1g_table)){ErrorReturn("1g table buffer is too small.\nRecompile application with a bigger buffer.");sceIoClose(fd);return 1;}
 
@@ -1593,7 +1594,7 @@ void CreateMMS(char *mmsver)
             if(cont != 1){OnBackToMainMenu(0);return;}
         }
 
-        err = DumpPSAR(MODE_ENCRYPT, "ms0:/661.PBP", "ms0:/TM/DCARK", "6.61", 0x120, NULL);
+        err = DumpPSAR(MODE_ENCRYPT, "ms0:/661.PBP", "ms0:/TM/DCARK", "6.61", NULL, NULL);
         if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/661.PBP", "ms0:/TM/DCARK/kd");}else{return;}
         if(err == 0){BackupSettings("ms0:/TM/DCARK/registry");}else{return;}
 

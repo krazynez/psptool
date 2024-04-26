@@ -6,6 +6,8 @@ CFLAGS = -Os -G0
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
+PSP_FW_VERSION = 271
+
 BUILD_PRX = 1
 PRX_EXPORTS = kprx.exp
 
@@ -22,6 +24,7 @@ include $(PSPSDK)/lib/build.mak
 all:
 	psp-build-exports -s $(PRX_EXPORTS)
 	cp Kprx.S ../
+	bin2c kprx.prx kprx.h kprx
 
 clean:
-	-rm -rf *.S *.o *.elf *.prx
+	-rm -rf *.S *.o *.elf *.prx kprx.h
