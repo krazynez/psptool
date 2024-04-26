@@ -21,11 +21,10 @@
 
 /*
 	TODO:
-		get proper hw mac address (if wlan on)
-		backup and restore nand
+	update motherboards to support all known ones
 */
 
-PSP_MODULE_INFO("Zeco Edition", 0, 1, 69);
+PSP_MODULE_INFO("PSP Tool", 0, 1, 69);
 PSP_MAIN_THREAD_ATTR(0);
 
 
