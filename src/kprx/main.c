@@ -494,26 +494,49 @@ int pspGetModel()
 {
 	return sceKernelGetModel();
 }
+
 int GetHardwareRevision()
 {
 	u32 tachyon = pspGetTachyonVersion();
 	u32 baryon = pspGetBaryonVersion();
 
-	if((tachyon == 0x00140000 && baryon == 0x00030600)) return 0x010100; // TA-079
-	else if((tachyon == 0x00200000 && baryon == 0x00030600)) return 0x010101; // TA-079v2
-	else if((tachyon == 0x00200000 && baryon == 0x00040600)) return 0x010102; // TA-079v3
-	else if((tachyon == 0x00300000 && baryon == 0x00040600)) return 0x010200; // TA-081
+	// 01g
+	if((tachyon == 0x00140000 && baryon == 0x00010600)) return 0x010100; // TA-079v1
+	else if((tachyon == 0x00140000 && baryon == 0x00020600)) return 0x010101; // TA-079v2
+	else if((tachyon == 0x00140000 && baryon == 0x00020600)) return 0x010102; // TA-079v3
+	else if((tachyon == 0x00140000 && baryon == 0x00030600)) return 0x010102; // TA-079v3
+	else if((tachyon == 0x00200000 && baryon == 0x00030600)) return 0x010103; // TA-079v4
+	else if((tachyon == 0x00200000 && baryon == 0x00040600)) return 0x010104; // TA-079v4
+	else if((tachyon == 0x00300000 && baryon == 0x00040600)) return 0x010200; // TA-081v1
+	else if((tachyon == 0x00300000 && baryon == 0x00040600) && pspGetPommelVersion() == 0x00000104) return 0x010200; // TA-081v2
 	else if((tachyon == 0x00400000 && baryon == 0x00114000)) return 0x010300; // TA-082
 	else if((tachyon == 0x00400000 && baryon == 0x00121000)) return 0x010400; // TA-086
 
-	else if((tachyon == 0x00500000 && baryon == 0x0022B200)) return 0x020100; // TA-085
+	// 02g
+	else if((tachyon == 0x00500000 && baryon == 0x0022B200)) return 0x020100; // TA-085v1
 	else if((tachyon == 0x00500000 && baryon == 0x00234000)) return 0x020101; // TA-085v2
-	else if((tachyon == 0x00500000 && baryon == 0x00243000)) return 0x020200; // TA-088
+	else if((tachyon == 0x00500000 && baryon == 0x00243000)) return 0x020200; // TA-088v1/v2
 	else if((tachyon == 0x00600000 && baryon == 0x00243000)) return 0x020202; // TA-088v3
-	else if((tachyon == 0x00500000 && baryon == 0x00263100)) return 0x020300; // TA-090
+	else if((tachyon == 0x00500000 && baryon == 0x00243000)) return 0x020300; // TA-090v1 (?)
 
-	else if((tachyon == 0x00600000 && baryon == 0x00263100)) return 0x030100; // TA-090v2
+	// 03g/04g/07g/09g
+	else if((tachyon == 0x00600000 && baryon == 0x00263100 && pspGetPommelVersion() == 0x00000132)) return 0x030101; // TA-090v2
+	else if((tachyon == 0x00600000 && baryon == 0x00263100 && pspGetPommelVersion() == 0x00000133)) return 0x030102; // TA-090v3
+	else if((tachyon == 0x00600000 && baryon == 0x00285000)) return 0x030200; // TA-092v1
+	else if((tachyon == 0x00810000 && baryon == 0x002C4000 && pspGetPommelVersion() == 0x00000143)) return 0x030301; // TA-093v2
+	else if((tachyon == 0x00810000 && baryon == 0x002E4000)) return 0x090100; // TA-095v1
+	else if((tachyon == 0x00820000 && baryon == 0x002E4000)) return 0x090101; // TA-095v2
+	else if((tachyon == 0x00810000 && baryon == 0x012E4000)) return 0x070102; // TA-095v3
+	else if((tachyon == 0x00820000 && baryon == 0x012E4000)) return 0x070103; // TA-095v4
+
+	// 05g/06g
+	else if((tachyon == 0x00720000 && baryon == 0x00304000)) return 0x050100; // TA-091v1
+	else if((tachyon == 0x00810000 && baryon == 0x00323000)) return 0x060100; // TA-094v1
+	else if((tachyon == 0x00810000 && baryon == 0x00324000)) return 0x060101; // TA-094v2
 	
+	// 11g
+	else if((tachyon == 0x00900000 && baryon == 0x00403000)) return 0x060101; // TA-096v1/v2
+																			  
 	return 0xffffff;
 }
 int GetModel()
@@ -584,28 +607,56 @@ char *GetMotherboard(char *buf)
 	u32 tachyon = pspGetTachyonVersion();
 	u32 baryon = pspGetBaryonVersion();
 
-	if((tachyon == 0x00140000 && baryon == 0x00030600)) sprintf(buf, "TA-079"); // get the motherboard version
-	else if((tachyon == 0x00200000 && baryon == 0x00030600)) sprintf(buf, "TA-079v2");
-	else if((tachyon == 0x00200000 && baryon == 0x00040600)) sprintf(buf, "TA-079v3");
-	else if((tachyon == 0x00300000 && baryon == 0x00040600)) sprintf(buf, "TA-081");
+
+	if((tachyon == 0x00140000 && baryon == 0x00010601)) sprintf(buf, "?TMU0--1?"); // get the motherboard version
+	else if((tachyon == 0x00140000 && baryon == 0x00020601)) sprintf(buf, "TMU-001");
+	else if((tachyon == 0x00140000 && baryon == 0x00030601)) sprintf(buf, "TMU-002");
+	else if((tachyon == 0x00140000 && baryon == 0x00010600)) sprintf(buf, "TA-079v1");
+	else if((tachyon == 0x00140000 && baryon == 0x00020600)) sprintf(buf, "TA-079v2");
+	else if((tachyon == 0x00140000 && baryon == 0x00030600)) sprintf(buf, "TA-079v3");
+	else if((tachyon == 0x00200000 && baryon == 0x00030600)) sprintf(buf, "TA-079v4");
+	else if((tachyon == 0x00200000 && baryon == 0x00040600)) sprintf(buf, "TA-079v5");
+	else if((tachyon == 0x00300000 && baryon == 0x00040600)) sprintf(buf, "TA-081v1");
+	else if((tachyon == 0x00300000 && baryon == 0x00040600 && pspGetPommelVersion() == 0x00000104)) sprintf(buf, "TA-081v2");
 	else if((tachyon == 0x00400000 && baryon == 0x00114000)) sprintf(buf, "TA-082");
 	else if((tachyon == 0x00400000 && baryon == 0x00121000)) sprintf(buf, "TA-086");
 
-	else if((tachyon == 0x00500000 && baryon == 0x0022B200)) sprintf(buf, "TA-085");
+	else if((tachyon == 0x00500000 && baryon == 0x0022B200)) sprintf(buf, "TA-085v1");
 	else if((tachyon == 0x00500000 && baryon == 0x00234000)) sprintf(buf, "TA-085v2");
-	else if((tachyon == 0x00500000 && baryon == 0x00243000)) sprintf(buf, "TA-088");
+	else if((tachyon == 0x00500000 && baryon == 0x00243000)) sprintf(buf, "TA-088v1");
+	else if((tachyon == 0x00500000 && baryon == 0x00243000 && pspGetPommelVersion() == 0x00000123)) sprintf(buf, "TA-088v2");
 	else if((tachyon == 0x00600000 && baryon == 0x00243000)) sprintf(buf, "TA-088v3");
-	else if((tachyon == 0x00500000 && baryon == 0x00263100)) sprintf(buf, "TA-090");
+	else if((tachyon == 0x00500000 && baryon == 0x00263000)) sprintf(buf, "TA-090v1");
 
-	else if((tachyon == 0x00600000 && baryon == 0x00263100)) sprintf(buf, "TA-090v2");
-	else sprintf(buf, "Unknown");
+	else if((tachyon == 0x00600000 && baryon == 0x00263100 && pspGetPommelVersion() == 0x00000132)) sprintf(buf, "TA-090v2");
+	else if((tachyon == 0x00600000 && baryon == 0x00263100 && pspGetPommelVersion() == 0x00000133)) sprintf(buf, "TA-090v3");
+	else if((tachyon == 0x00600000 && baryon == 0x00285000)) sprintf(buf, "TA-092");
+	else if((tachyon == 0x00810000 && baryon == 0x002C4000 && pspGetPommelVersion() == 0x00000141)) sprintf(buf, "TA-093v1");
+	else if((tachyon == 0x00810000 && baryon == 0x002C4000 && pspGetPommelVersion() == 0x00000143)) sprintf(buf, "TA-093v2");
+	else if((tachyon == 0x00810000 && baryon == 0x002E4000)) sprintf(buf, "TA-095v1");
+	else if((tachyon == 0x00820000 && baryon == 0x002E4000)) sprintf(buf, "TA-095v2");
+	else if((tachyon == 0x00810000 && baryon == 0x012E4000)) sprintf(buf, "TA-095v3");
+	else if((tachyon == 0x00820000 && baryon == 0x012E4000)) sprintf(buf, "TA-095v4");
+
+
+	else if((tachyon == 0x00720000 && baryon == 0x00304000)) sprintf(buf, "TA-091");
+	else if((tachyon == 0x00810000 && baryon == 0x00323000)) sprintf(buf, "TA-094v1");
+	else if((tachyon == 0x00810000 && baryon == 0x00324000)) sprintf(buf, "TA-094v2");
+
+
+	else if((tachyon == 0x00900000 && baryon == 0x00403000)) sprintf(buf, "TA-096/TA-097");
+
+	else sprintf(buf, "Unk: tachyon: %08X baryon: %08X", tachyon, baryon);
 
 	return buf;
 }
 char *GetFWVersion(char *buf)
 {
 	u32 ver = sceKernelDevkitVersion();
-	sprintf(buf, "%i.%02i", (ver >> 24) & 0xff, (ver >> 8) & 0xffff);
+	int maj = (ver >> 24) & 0xFF;
+    int min = (ver >> 16) & 0xFF;
+    int pat = (ver >> 8) & 0xFF;	
+	sprintf(buf, "%d.%d%d", maj, min, pat);
 
 	return buf;
 }

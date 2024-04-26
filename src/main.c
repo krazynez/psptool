@@ -36,6 +36,8 @@ char ebootpath[256];
 MSStruct MSInfo;
 int tmmode, selitem, bguseflash = 0, wavespeed = 1, showback_prev = 0, showenter_prev = 0;
 
+static int go = -1;
+
 /*
 	Callbacks
 */
@@ -955,7 +957,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 	if(!memcmp(ver, "3.8", 3) || !memcmp(ver, "3.9", 3)){table_mode = 1;}
 	else if(!memcmp(ver, "4.0", 3)){table_mode = 2;}
 	else if(!memcmp(ver, "5.0", 3)){table_mode = 3;}
-	else if(!memcmp(ver, "6.", 2) && (psarVersion == 5)){table_mode = 5; version = 661;}
+	//else if(!memcmp(ver, "6.", 2) && (psarVersion == 5)){table_mode = 5; version = 661;}
 	else if(!memcmp(ver, "6.", 2)){table_mode = 4; version = 661;}
 	else{table_mode = 0;}
 
@@ -990,7 +992,8 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 
 		if(is5Dnum(name)){
 			//if(strcmp(name, "00001") != 0 && strcmp(name, "00002") != 0 && strcmp(name, "00003") != 0){
-			if (atoi(name) >= 100 || (atoi(name) >= 10 && version < 661)) {
+			if (atoi(name) >= 100 || (atoi(name) >= 10)) {
+			//if (atoi(name) >= 1 && atoi(name) <= 11) {
 				int found = 0;
 				
 				if(_1gtable_size > 0){found = FindTablePath(_1g_table, _1gtable_size, name, name);}
@@ -1006,7 +1009,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 				if(!found && _11gtable_size > 0){found = FindTablePath(_11g_table, _11gtable_size, name, name);}
 				if(!found && _12gtable_size > 0){found = FindTablePath(_12g_table, _12gtable_size, name, name);}
 				if(!found){
-					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Warning: cannot find path of %s", name);
+					SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Warning: cannot find table path of %s", name);
 					error = 0;
 					continue;
 				}
@@ -1014,7 +1017,7 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 		}
 		else if(!strncmp(name, "com:", 4) && comtable_size > 0){
 			if(!FindTablePath(com_table, comtable_size, name+4, name)){
-				SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Warning: cannot find path of %s", name);
+				SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Warning: cannot find com path of %s", name);
 				error = 0;
 				continue;
 			}
@@ -1118,11 +1121,10 @@ int DumpPSAR(int extractmode, char *filepath, char *outdir, char *requiredver, u
 				continue;
 			}
 			else if(!strcmp(name, "00005")){
-				if(model == NULL || model == 0x000 || model == 0x003 || model == 0x103 || model == 0x023 || model == 0x123){
+				if(model == 0x1337){
 					_5gtable_size = pspDecryptTable(sm_buffer2, sm_buffer1, cbExpanded, table_mode);
 							
 					if(_5gtable_size <= 0){
-						// We don't have yet the keys for table of 3000, they are only in mesg_led05g.prx
 						SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Cannot decrypt 5g table");
 						error = 0;
 						continue;
@@ -1509,7 +1511,7 @@ void CreateMMS(char *mmsver)
 		vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Dark_AleX\nRelease Date: 19th of August 2008\nFirmware: 4.01 M33-2 (4.01 OFW)\nCompatibility: TA-088v2 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
 		if(!FileExists("ms0:/401.PBP")){ErrorReturn("Please ensure 401.PBP exists at the root of the Memory Stick.");return;}
 		
-		if(GetHardwareRevision() > 0x020201 && GetHardwareRevision != 0x020300){
+		if(GetHardwareRevision() > 0x020201 && GetHardwareRevision() != 0x020300){
 			cont = vlfGuiMessageDialog("This Magic Memory Stick software can not be installed on your PSP unit.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
 			if(cont != 1){OnBackToMainMenu(0);return;}
 		}
@@ -1535,7 +1537,7 @@ void CreateMMS(char *mmsver)
 		vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Dark_AleX\nRelease Date: 18th of December 2008\nFirmware: 5.00 M33-4 (5.00 OFW)\nCompatibility: TA-088v2 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
 		if(!FileExists("ms0:/500.PBP")){ErrorReturn("Please ensure 500.PBP exists at the root of the Memory Stick.");return;}
 		
-		if(GetHardwareRevision() > 0x020201 && GetHardwareRevision != 0x020300){
+		if(GetHardwareRevision() > 0x020201 && GetHardwareRevision() != 0x020300){
 			cont = vlfGuiMessageDialog("This Magic Memory Stick software can not be installed on your PSP unit.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
 			if(cont != 1){OnBackToMainMenu(0);return;}
 		}
@@ -1562,7 +1564,7 @@ void CreateMMS(char *mmsver)
         vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: Balika011\nRelease Date: 18th of November 2021\nFirmware: 5.02 M33-5\n5.02 TestingTool M33\n5.02 OFW\nCompatibility: TA-092 and older", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
         if(!FileExists("ms0:/502.PBP")){ErrorReturn("Please ensure 502.PBP exists at the root of the Memory Stick.");return;}
 
-        if(GetHardwareRevision() > 0x020201 && GetHardwareRevision != 0x020300){
+        if(GetHardwareRevision() > 0x030101){
             cont = vlfGuiMessageDialog("This Magic Memory Stick software can not be installed on your PSP unit.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
             if(cont != 1){OnBackToMainMenu(0);return;}
         }
@@ -1586,15 +1588,22 @@ void CreateMMS(char *mmsver)
     }
 	else if(strcmp(mmsver, "DC10") == 0){
         vlfGuiMessageDialog("Magic Memory Stick Information\n\nCreator: ARK-4 Team\nRelease Date: 20th of April 2024\nFirmware: 6.61 ARK-4\n6.61 OFW\nCompatibility: All", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
-        if(!FileExists("ms0:/661.PBP")){ErrorReturn("Please ensure 661.PBP exists at the root of the Memory Stick.");return;}
+		if(FileExists("ms0:/661GO.PBP")){go = 1;}
+        if(!FileExists("ms0:/661.PBP") && !FileExists("ms0:/661GO.PBP")){ErrorReturn("Please ensure 661.PBP or 661GO.PBP exists at the root of the Memory Stick.");return;}
 
         if(DirExists("ms0:/TM/DCARK")){
             cont = vlfGuiMessageDialog("A Magic Memory Stick Software already exists at ms0:/TM/DCARK and will be overwritten by this installation.\n\nDo you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
             if(cont != 1){OnBackToMainMenu(0);return;}
         }
 
-        err = DumpPSAR(MODE_ENCRYPT, "ms0:/661.PBP", "ms0:/TM/DCARK", "6.61", NULL, NULL);
-        if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/661.PBP", "ms0:/TM/DCARK/kd");}else{return;}
+		if(go > 0) {
+        	err = DumpPSAR(MODE_ENCRYPT, "ms0:/661GO.PBP", "ms0:/TM/DCARK", "6.61", 0x1337, NULL);
+        	if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/661GO.PBP", "ms0:/TM/DCARK/kd");}else{return;}
+		}
+		else {
+        	err = DumpPSAR(MODE_ENCRYPT, "ms0:/661.PBP", "ms0:/TM/DCARK", "6.61", NULL, NULL);
+        	if(err == 0){err = ExtractUpdaterPRXs(1, "ms0:/661.PBP", "ms0:/TM/DCARK/kd");}else{return;}
+		}
         if(err == 0){BackupSettings("ms0:/TM/DCARK/registry");}else{return;}
 
         for(i = 0; i < sizeof(DC10files) / sizeof(DC10files[0]); i++){
