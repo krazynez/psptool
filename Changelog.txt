@@ -5,6 +5,7 @@
 
  Rev 1: (Saturday, 27 April 2024)
  - Fixed: 1g region detection
+ - Fixed: TM detection when running DC-ARK
 
 1.10
  - Added:   Detection of CodeFreak PSP IPL.
