@@ -543,7 +543,9 @@ int GetHardwareRevision()
 int GetModel()
 {
 	u8 region[1];
-	pspIdStorageLookup(0x100, 0x3D, region, 1);
+	// https://github.com/Yoti/psp_pspident/blob/2aa209cb164b5a19f38f4f2dc281fe3ff913ceef/ident_pbp/kernel.c#L195
+	memset(region, 0, sizeof(region));
+	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
 
 	int model = (sceKernelGetModel() + 1) * 1000;
 
@@ -564,7 +566,9 @@ int GetModel()
 char *GetRegion(char *buf)
 {
 	u8 region[1];
-	pspIdStorageLookup(0x100, 0x3D, region, 1);
+	// https://github.com/Yoti/psp_pspident/blob/2aa209cb164b5a19f38f4f2dc281fe3ff913ceef/ident_pbp/kernel.c#L195
+	memset(region, 0, sizeof(region));
+	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
 
 	if(region[0] == 0x03) sprintf(buf, "Japan");	   // PSP-X000
 	else if(region[0] == 0x04) sprintf(buf, "America"); // PSP-X001
