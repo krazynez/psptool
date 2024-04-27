@@ -1,3 +1,11 @@
+1.69 (Friday, 26 April 2024)
+ - Added: DCv9
+ - Added: DCv10
+ - Added: All known motherboard revisions
+
+ Rev 1: (Saturday, 27 April 2024)
+ - Fixed: 1g region detection
+
 1.10
  - Added:   Detection of CodeFreak PSP IPL.
 
