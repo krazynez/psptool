@@ -401,7 +401,7 @@ int app_main(SceSize args, void *argp)
 	EBOOT_UNKNOWN4 = GetEBOOToffsetBuff(big_buffer, UNKNOWN4);
 	EBOOT_UNKNOWN5 = GetEBOOToffsetBuff(big_buffer, UNKNOWN5);
 
-	if(FileExists("flash0:/kd/resurrection.prx") || FileExists("flash0:/kd/hibari.prx") || DirExists("flach0:/")){tmmode = 1;}
+	if(FileExists("flash0:/kd/resurrection.prx") || FileExists("flash0:/kd/pspbtcnf_dc.bin") || FileExists("flash0:/kd/hibari.prx") || DirExists("flach0:/")){tmmode = 1;}
 
 	vlfGuiCacheResource("system_plugin");
 	vlfGuiCacheResource("system_plugin_fg");
@@ -1694,7 +1694,7 @@ void StartupCheck()
 		}
 	}
 
-	/*if(!err){
+	if(!err){
 		struct modnames {
 			char*	name;
 			int		allowunload;
@@ -1718,7 +1718,7 @@ void StartupCheck()
 				}
 			}
 		}
-	}*/
+	}
 
 	if(err != 0){
 		ErrorReturn(msg);

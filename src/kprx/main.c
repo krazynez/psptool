@@ -167,6 +167,7 @@ int pspIdStorageLookup(u16 key, u32 offset, void *buf, u32 len)
 	int ret = sceIdStorageLookup(key, offset, buf, len);
 
 	pspSdkSetK1(k1);
+	return ret;
 }
 int pspIdStorageReadLeaf(u16 key, void *buf)
 {
