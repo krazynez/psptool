@@ -547,7 +547,14 @@ int GetModel()
 	memset(region, 0, sizeof(region));
 	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
 
-	int model = (sceKernelGetModel() + 1) * 1000;
+	int k1 = pspSdkSetK1(0);
+	int model = (kuKernelGetModel() + 1) * 1000;
+	pspSdkSetK1(k1);
+
+	if(model == 4000 || model == 9000 || model == 7000)
+		model = 3000;
+	else if (model == 5000 || model == 11000)
+		model == 1000;
 
 	if(region[0] == 0x03) model += 0;	   // PSP-X000
 	else if(region[0] == 0x04) model += 1; // PSP-X001
@@ -559,6 +566,7 @@ int GetModel()
 	else if(region[0] == 0x0B) model += 7; // PSP-X007
 	else if(region[0] == 0x0C) model += 8; // PSP-X008
 	else if(region[0] == 0x0D) model += 9; // PSP-X009
+	else if(region[0] == 0x08) model += 10; // PSP-X010
 	else{model += 0;}
 
 	return model;
@@ -580,13 +588,15 @@ char *GetRegion(char *buf)
 	else if(region[0] == 0x0B) sprintf(buf, "Taiwan"); // PSP-X007
 	else if(region[0] == 0x0C) sprintf(buf, "Russia"); // PSP-X008
 	else if(region[0] == 0x0D) sprintf(buf, "China"); // PSP-X009
+	else if(region[0] == 0x08) sprintf(buf, "Mexico"); // PSP-X010
 	else sprintf(buf, "Unk %02X", region); // unknown
 
 	return buf;
 }
 char *GetShippedFW(char *buf)
 {
-	pspIdStorageLookup(0x51, 0, buf, 5);
+	memset(buf, 0, sizeof(buf));
+	pspIdStorageLookup(0x51, 0, buf, 4);
 
 	if(buf[0] == 0)
 		sprintf(buf, "N/A");
@@ -628,8 +638,7 @@ char *GetMotherboard(char *buf)
 
 	else if((tachyon == 0x00500000 && baryon == 0x0022B200)) sprintf(buf, "TA-085v1");
 	else if((tachyon == 0x00500000 && baryon == 0x00234000)) sprintf(buf, "TA-085v2");
-	else if((tachyon == 0x00500000 && baryon == 0x00243000)) sprintf(buf, "TA-088v1");
-	else if((tachyon == 0x00500000 && baryon == 0x00243000 && pspGetPommelVersion() == 0x00000123)) sprintf(buf, "TA-088v2");
+	else if((tachyon == 0x00500000 && baryon == 0x00243000)) sprintf(buf, "TA-088v1/v2");
 	else if((tachyon == 0x00600000 && baryon == 0x00243000)) sprintf(buf, "TA-088v3");
 	else if((tachyon == 0x00500000 && baryon == 0x00263000)) sprintf(buf, "TA-090v1");
 
@@ -649,7 +658,7 @@ char *GetMotherboard(char *buf)
 	else if((tachyon == 0x00810000 && baryon == 0x00324000)) sprintf(buf, "TA-094v2");
 
 
-	else if((tachyon == 0x00900000 && baryon == 0x00403000)) sprintf(buf, "TA-096/TA-097");
+	else if((tachyon == 0x00900000 && baryon == 0x00403000)) sprintf(buf, "TA-096/097");
 
 	else sprintf(buf, "Unk: tachyon: %08X baryon: %08X", tachyon, baryon);
 

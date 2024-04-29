@@ -416,7 +416,7 @@ int app_main(SceSize args, void *argp)
 	vlfGuiAddEventHandler(PSP_CTRL_SQUARE, 0, SetBackground, NULL);
 
 	int btn = GetKeyPress(0);
-	if(!(btn & PSP_CTRL_RTRIGGER)){StartupCheck();}
+	//if(!(btn & PSP_CTRL_RTRIGGER)){StartupCheck();}
 
 	ResetScreen(1, 0, 0);
 
@@ -1703,7 +1703,7 @@ void StartupCheck()
 			{"RemoteJoyLite", 0}
 		};
 
-		sprintf(msg, "Please disable the following plugins in GAME mode to reduce the risk of issues arising (hold R after exiting):\n");
+		sprintf(msg, "Please disable the following plugins in GAME mode to reduce the risk of issues arising (hold R while booting PSP Tool to bypass):\n");
 
 		for(i = 0; i < sizeof(modnames) / sizeof(modnames[0]); i++){
 			int modloaded = pspModuleLoaded(modnames[i].name);
@@ -1867,22 +1867,92 @@ int CheckSysInfo(int page)
 	int i;
 	for(i = 0; i < vlf_text_items; i++){if(vlf_texts[i] != NULL){vlfGuiSetTextFontSize(vlf_texts[i], 0.75);}}
 }
+
+/*void sjis_to_utf8(const unsigned char *sjis, unsigned char *utf8) {
+    while (*sjis != '\0') {
+        if ((*sjis >= 0x81 && *sjis <= 0x9F) || (*sjis >= 0xE0 && *sjis <= 0xFC)) {
+            // Two-byte character
+            utf8[0] = ((*sjis & 0x7F) << 1) | ((*(sjis + 1) & 0x60) >> 5) | 0xC0;
+            utf8[1] = ((*sjis & 0x1F) << 6) | (*(sjis + 1) & 0x3F) | 0x80;
+            sjis += 2;
+            utf8 += 2;
+        } else {
+            // Single-byte character
+            *utf8++ = *sjis++;
+        }
+    }
+    *utf8 = '\0';
+}
+*/
+// Nope doesn't work
+/*char* sjis_to_utf8(const char *input) {
+    size_t input_len = strlen(input);
+    size_t output_len = input_len * 4 + 1; // Max possible size for UTF-8
+    char *output = (char*)malloc(output_len);
+    if (output == NULL) {
+        perror("malloc");
+        return NULL;
+    }
+
+    size_t i = 0, j = 0;
+    while (i < input_len) {
+        uint8_t ch = input[i++];
+        if (ch < 0x80) {
+            output[j++] = ch;
+        } else if (ch >= 0xA1 && ch <= 0xDF) {
+            output[j++] = 0xEF;
+            output[j++] = 0xBD;
+            output[j++] = ch;
+        } else if ((ch >= 0x81 && ch <= 0x9F) || (ch >= 0xE0 && ch <= 0xFC)) {
+            uint8_t ch2 = input[i++];
+            if ((ch2 >= 0x40 && ch2 <= 0x7E) || (ch2 >= 0x80 && ch2 <= 0xFC)) {
+                uint16_t sjis_char = (ch << 8) | ch2;
+                uint32_t unicode;
+                if (sjis_char >= 0x8140 && sjis_char <= 0x9FFC) {
+                    unicode = sjis_char + 0xC140;
+                } else {
+                    unicode = sjis_char + 0xF140;
+                }
+                output[j++] = (unicode >> 12) | 0xE0;
+                output[j++] = ((unicode >> 6) & 0x3F) | 0x80;
+                output[j++] = (unicode & 0x3F) | 0x80;
+            }
+        }
+    }
+    output[j] = '\0'; // Null-terminate the output string
+    return output;
+}
+*/
 void CheckSysInfoP1()
 {
-	char owner_name[32], password[5];
+	unsigned char owner_name[256];
+	//char *new_owner_name;
+	char password[5];
 
 	memset(owner_name, 0, sizeof(owner_name));
+	GetRegistryValue("/CONFIG/SYSTEM", "owner_name", &owner_name, sizeof(owner_name));
+	//new_owner_name = sjis_to_utf8(owner_name);
 	memset(password, 0, sizeof(password));
+	GetRegistryValue("/CONFIG/SYSTEM/LOCK", "password", &password, sizeof(password));
 
-	vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-%04i", GetModel());
+	int model = (kuKernelGetModel() + 1) * 1000;	
+	int gen = kuKernelGetModel() + 1;
+	if(model == 5000)
+		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-N%04i (%02ig)", GetModel(), gen);
+	else if(model == 11000)
+		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-E%04i (%02ig)", GetModel(), gen);
+	else
+		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-%04i (%02ig)", GetModel(), gen);
+	
 	vlf_texts[1] = vlfGuiAddTextF(30, 105, "Region: %s", GetRegion(big_buffer));
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "Installed Firmware: %s", GetFWVersion(big_buffer));
 	vlf_texts[3] = vlfGuiAddTextF(30, 155, "Original Firmware: %s", GetShippedFW(big_buffer));
 
-	vlf_texts[4] = vlfGuiAddTextF(230, 80, "Name: %s", GetRegistryValue("/CONFIG/SYSTEM", "owner_name", &owner_name, sizeof(owner_name)));
-	vlf_texts[5] = vlfGuiAddTextF(230, 105, "Password: %s", GetRegistryValue("/CONFIG/SYSTEM/LOCK", "password", &password, sizeof(password)));
+	vlf_texts[4] = vlfGuiAddTextF(230, 80, "Name: %s", owner_name);
+	vlf_texts[5] = vlfGuiAddTextF(230, 105, "Password: %s", password);
 	vlf_texts[6] = vlfGuiAddTextF(230, 130, "CPU Frequency: %i Mhz", scePowerGetCpuClockFrequency());
 	vlf_texts[7] = vlfGuiAddTextF(230, 155, "BUS Frequency: %i Mhz", scePowerGetBusClockFrequency());
+	
 }
 void CheckSysInfoP2()
 {
@@ -2077,6 +2147,19 @@ void FormatMS(char *msname, int iplreservedspace)
 	if(written != new_partstartsize){SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Failure writing the Partition Start Blocks to the Memory Stick");}
 
 	sceIoClose(out);
+
+	/*
+	// This kills the PSP, so yeah.... lets not do it for now.
+	int i = 0;
+	for(;i<sizeof(Directories)/sizeof(Directories[0]);i++){
+		int res = sceIoMkdir(Directories[i], 0777);
+		if(res < 0) {
+			char err[64];
+			sprintf(err, "%s: %s" "Failed to make", Directories[i]);
+			vlfGuiMessageDialog(err, VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+		}
+	}
+	*/
 
 	vlfGuiMessageDialog("Format completed. The game will now exit to reduce the risk of system instability.", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
 	sceKernelExitGame();
