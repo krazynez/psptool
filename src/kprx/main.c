@@ -548,13 +548,17 @@ int GetModel()
 	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
 
 	int k1 = pspSdkSetK1(0);
+	SceCtrlData pad;
 	int model = (kuKernelGetModel() + 1) * 1000;
-	pspSdkSetK1(k1);
 
-	if(model == 4000 || model == 9000 || model == 7000)
-		model = 3000;
-	else if (model == 5000 || model == 11000)
-		model == 1000;
+	sceCtrlReadBufferPositive(&pad, 1);
+	if(!(pad.Buttons & PSP_CTRL_LTRIGGER)) {
+		if(model == 4000 || model == 9000 || model == 7000)
+			model = 3000;
+		if (model == 5000 || model == 11000)
+			model == 1000;
+	}
+	pspSdkSetK1(k1);
 
 	if(region[0] == 0x03) model += 0;	   // PSP-X000
 	else if(region[0] == 0x04) model += 1; // PSP-X001
@@ -573,7 +577,7 @@ int GetModel()
 }
 char *GetRegion(char *buf)
 {
-	u8 region[1];
+	u8 region[2];
 	// https://github.com/Yoti/psp_pspident/blob/2aa209cb164b5a19f38f4f2dc281fe3ff913ceef/ident_pbp/kernel.c#L195
 	memset(region, 0, sizeof(region));
 	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
