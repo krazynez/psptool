@@ -16,7 +16,7 @@ USE_KERNEL_LIBS = 1
 
 LIBDIR = ../lib
 LDFLAGS = -mno-crt0 -nostartfiles
-LIBS = -lpsphen -lpspnand_driver -lpspumdman_driver -lpspwlan -lpspnet_adhoc -lpspnet_adhocctl -lpspnet -lpsputility -lpspsemaphore -lpspmesgd_driver -lpspnwman_driver -lpsputilsforkernel -lpspsystemctrl_kernel -lpspkernel
+LIBS = -lpsphen -lpspnand_driver -lpspumdman_driver -lpspwlan -lpspnet_adhoc -lpspnet_adhocctl -lpspnet -lpsputility -lpspsemaphore -lpspmesgd_driver -lpspnwman_driver -lpsputilsforkernel -lpspsystemctrl_kernel -lpspkernel -lpspsysmem_kernel
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak

@@ -11,3 +11,5 @@ clean:
 	@rm -rf PSP
 	@printf '\n\n** Cleaned **\n\n'
 
+release: clean all
+	zip -r psptool.zip PSP/
