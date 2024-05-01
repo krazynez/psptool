@@ -411,22 +411,35 @@ void pspReadNandBlock(u32 page, u8 *buffer)
 /*
 	System Information
 */
+void* (*_sceUmdManGetUmdDrive)(int) = NULL;
 void *pspUmdManGetUmdDrive(int driveNum)
 {
 	int k1 = pspSdkSetK1(0);
-	void *ret = (void*)sceUmdManGetUmdDrive(driveNum);
+	if(pspGetModel() == 4 || pspGetModel() == 5) {
+		pspSdkSetK1(k1);
+		return;
+	}
+	_sceUmdManGetUmdDrive = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x47E2B6D8);
+	void *ret = _sceUmdManGetUmdDrive(driveNum);
 	pspSdkSetK1(k1);
 
 	return ret;
 }
+int (*_sceUmdExecInquiryCmd)(void*, u8*, u8*) = NULL;
 int pspUmdExecInquiryCmd(void *drive, u8 *param, u8 *buf)
 {
 	int k1 = pspSdkSetK1(0);
-	int ret = sceUmdExecInquiryCmd(drive, param, buf);
+	if(pspGetModel() == 4 || pspGetModel() == 5) {
+		pspSdkSetK1(k1);
+		return -1;
+	}
+	_sceUmdExecInquiryCmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x1B19A313);
+	int ret = _sceUmdExecInquiryCmd(drive, param, buf);
 	pspSdkSetK1(k1);
 
 	return ret;
 }
+
 u32 pspGetTachyonVersion()
 {
 	int k1 = pspSdkSetK1(0);
@@ -476,11 +489,14 @@ u32 pspGetKirkVersion() {
    
    return ver;
 }
+int (*_sceSysregAtaBusClockEnable)(void) = NULL;
 u32 pspGetSpockVersion() { 
    int k1 = pspSdkSetK1(0);
 
    int ver, i = 0, val = *(u32 *)0xBDF00004;
-   sceSysregAtaBusClockEnable();
+   _sceSysregAtaBusClockEnable = (void *)sctrlHENFindFunction("sceLowIO_Driver", "sceSysreg_driver", 0x16909002);
+   _sceSysregAtaBusClockEnable();
+ 
    do{
        i++;
        sceKernelDelayThread(1000);
@@ -549,7 +565,7 @@ int GetModel()
 
 	int k1 = pspSdkSetK1(0);
 	SceCtrlData pad;
-	int model = (kuKernelGetModel() + 1) * 1000;
+	int model = (pspGetModel() + 1) * 1000;
 
 	sceCtrlReadBufferPositive(&pad, 1);
 	if(!(pad.Buttons & PSP_CTRL_LTRIGGER)) {
@@ -577,10 +593,9 @@ int GetModel()
 }
 char *GetRegion(char *buf)
 {
-	u8 region[2];
+	u8 region[1];
 	// https://github.com/Yoti/psp_pspident/blob/2aa209cb164b5a19f38f4f2dc281fe3ff913ceef/ident_pbp/kernel.c#L195
-	memset(region, 0, sizeof(region));
-	pspIdStorageLookup(0x0100, 0xF5, &region, 1);
+	pspIdStorageLookup(0x0100, 0xF5, region, 1);
 
 	if(region[0] == 0x03) sprintf(buf, "Japan");	   // PSP-X000
 	else if(region[0] == 0x04) sprintf(buf, "America"); // PSP-X001
@@ -607,6 +622,13 @@ char *GetShippedFW(char *buf)
 
 	return buf;
 }
+char *GetBTMAC(char *buf) {
+	u8 idsbtmac[6];
+	pspIdStorageLookup(0x0050, 0x41, idsbtmac, 6);
+	sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x", idsbtmac[0], idsbtmac[1], idsbtmac[2], idsbtmac[3], idsbtmac[4], idsbtmac[5]);
+
+	return buf;
+}
 char *GetUMDFW(char *buf)
 {
 	u8 buf2[0x60];
@@ -621,6 +643,7 @@ char *GetUMDFW(char *buf)
 
 	return buf;
 }
+
 char *GetMotherboard(char *buf)
 {
 	u32 tachyon = pspGetTachyonVersion();

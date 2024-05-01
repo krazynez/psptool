@@ -37,6 +37,7 @@ MSStruct MSInfo;
 int tmmode, selitem, bguseflash = 0, wavespeed = 1, showback_prev = 0, showenter_prev = 0;
 
 static int go = -1;
+static int prev_page = -1;
 
 /*
 	Callbacks
@@ -213,7 +214,7 @@ int OnMainMenuSelect(int sel)
 		else if(sel == 2){ConnectUSB(1, PSP_USBDEVICE_FLASH1);} // connect flash1 to usb
 		else if(sel == 3){ConnectUSB(1, PSP_USBDEVICE_FLASH2);} // connect flash2 to usb
 		else if(sel == 4){ConnectUSB(1, PSP_USBDEVICE_FLASH3);} // connect flash3 to usb
-		else if(sel == 5){ConnectUSB(1, PSP_USBDEVICE_UMD9660);} // connect umd disc to usb
+		//else if(sel == 5){ConnectUSB(1, PSP_USBDEVICE_UMD9660);} // connect umd disc to usb
 	}
 	else if(mode == "Memory Stick Options"){
 		mode = "Memory Stick Options.1";
@@ -1859,9 +1860,22 @@ int CheckSysInfo(int page)
 	if(page == 0){vlfGuiCancelPreviousPageControl();}
 	if(page == 3){vlfGuiCancelNextPageControl();}
 
-	if(page == 0){CheckSysInfoP1();}
-	else if(page == 1){CheckSysInfoP2();}
-	else if(page == 2){CheckSysInfoP3();}
+	if(page == 0){prev_page=page;CheckSysInfoP1();}
+	else if(page == 1){
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5 || kuKernelGetModel() == 10) {
+			if (prev_page == 0) {
+				CheckSysInfoP3();
+			}
+			else {
+				vlfGuiCancelPreviousPageControl();
+				CheckSysInfoP1();
+			}
+		}
+		else
+			CheckSysInfoP2();
+
+	}
+	else if(page == 2){prev_page=page;CheckSysInfoP3();}
 	else if(page == 3){CheckSysInfoP4();}
 
 	int i;
@@ -1935,14 +1949,18 @@ void CheckSysInfoP1()
 	memset(password, 0, sizeof(password));
 	GetRegistryValue("/CONFIG/SYSTEM/LOCK", "password", &password, sizeof(password));
 
-	int model = (kuKernelGetModel() + 1) * 1000;	
 	int gen = kuKernelGetModel() + 1;
-	if(model == 5000)
-		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-N%04i (%02ig)", GetModel(), gen);
-	else if(model == 11000)
-		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-E%04i (%02ig)", GetModel(), gen);
-	else
-		vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-%04i (%02ig)", GetModel(), gen);
+	int model = (kuKernelGetModel() + 1) * 1000;
+	switch (model) {
+		case 5000:
+			vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-N%04i (%02ig)", GetModel(), gen);
+			break;
+		case 11000:
+			vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-E%04i (%02ig)", GetModel(), gen);
+			break;
+		default:
+			vlf_texts[0] = vlfGuiAddTextF(30, 80, "Model: PSP-%04i (%02ig)", GetModel(), gen);
+	}
 	
 	vlf_texts[1] = vlfGuiAddTextF(30, 105, "Region: %s", GetRegion(big_buffer));
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "Installed Firmware: %s", GetFWVersion(big_buffer));
@@ -1973,7 +1991,10 @@ void CheckSysInfoP3()
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "Baryon: 0x%08X", pspGetBaryonVersion());
 	vlf_texts[3] = vlfGuiAddTextF(30, 155, "Pommel: 0x%08X", pspGetPommelVersion());
 
-	vlf_texts[4] = vlfGuiAddTextF(230, 80, "UMD Drive Firmware: %s", GetUMDFW(big_buffer));
+	if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5)
+		vlf_texts[4] = vlfGuiAddTextF(230, 80, "BT MAC: %s", GetBTMAC(big_buffer));
+	else
+		vlf_texts[4] = vlfGuiAddTextF(230, 80, "UMD Drive Firmware: %s", GetUMDFW(big_buffer));
 	vlf_texts[5] = vlfGuiAddTextF(230, 105, "Fuse Id: 0x%llX", pspGetFuseId());
 	vlf_texts[6] = vlfGuiAddTextF(230, 130, "Fuse Config: 0x%08X", pspGetFuseConfig());
 	vlf_texts[7] = vlfGuiAddTextF(230, 155, "NAND Seed: 0x%08X", pspNandGetScramble());
@@ -1984,10 +2005,16 @@ void CheckSysInfoP4()
 
 	GetMACAddress(macaddr);
 	*(u32 *)kirk = pspGetKirkVersion();
-	*(u32 *)spock = pspGetSpockVersion();
+	if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
+		vlf_texts[1] = vlfGuiAddTextF(30, 105, "Spock Version: %s", "N/A");
+	}
+	else {
+	
+		*(u32 *)spock = pspGetSpockVersion();
+		vlf_texts[1] = vlfGuiAddTextF(30, 105, "Spock Version: %c%c%c%c", spock[3], spock[2], spock[1], spock[0]);
+	}
 
 	vlf_texts[0] = vlfGuiAddTextF(30, 80, "Kirk Version: %c%c%c%c", kirk[3], kirk[2], kirk[1], kirk[0]);
-	vlf_texts[1] = vlfGuiAddTextF(30, 105, "Spock Version: %c%c%c%c", spock[3], spock[2], spock[1], spock[0]);
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "WLAN Status: %s", sceWlanGetSwitchState() == 0 ? "Off":"On");
 	vlf_texts[3] = vlfGuiAddTextF(30, 155, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
 
