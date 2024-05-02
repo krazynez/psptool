@@ -572,7 +572,7 @@ int GetModel()
 		if(model == 4000 || model == 9000 || model == 7000)
 			model = 3000;
 		if (model == 5000 || model == 11000)
-			model == 1000;
+			model = 1000;
 	}
 	pspSdkSetK1(k1);
 
