@@ -417,7 +417,7 @@ void *pspUmdManGetUmdDrive(int driveNum)
 	int k1 = pspSdkSetK1(0);
 	if(pspGetModel() == 4 || pspGetModel() == 5) {
 		pspSdkSetK1(k1);
-		return;
+		return NULL;
 	}
 	_sceUmdManGetUmdDrive = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x47E2B6D8);
 	void *ret = _sceUmdManGetUmdDrive(driveNum);
