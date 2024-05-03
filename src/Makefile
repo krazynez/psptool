@@ -1,5 +1,5 @@
 TARGET = main
-OBJS = Kprx.o main.o common.o crt0.o
+OBJS = Kprx.o main.o common.o #crt0.o
 
 INCDIR = include
 CFLAGS = -Os -G0

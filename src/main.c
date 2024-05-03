@@ -18,6 +18,10 @@
 #include <main.h>
 #include <common.h>
 #include <kprx/main.h>
+#include <kprx/kprx.h>
+#include <data/PRXs/iop.h>
+#include <data/PRXs/vlf.h>
+#include <data/PRXs/intraFont.h>
 
 /*
 	TODO:
@@ -26,6 +30,9 @@
 
 PSP_MODULE_INFO("PSP Tool", 0, 1, 69);
 PSP_MAIN_THREAD_ATTR(0);
+
+
+int app_main(SceSize args, void *argp);
 
 
 char *mode = "Main";
@@ -38,6 +45,50 @@ int tmmode, selitem, bguseflash = 0, wavespeed = 1, showback_prev = 0, showenter
 
 static int go = -1;
 
+void __start() {
+	int start_thread(SceSize args, void *argp)
+	{
+    	path = (char *)argp;
+    	int last_trail = -1;
+    	int i;
+
+    	if(path){
+			for (i = 0; path[i]; i++){
+				if (path[i] == '/')
+					last_trail = i;
+			}
+    	}
+
+		if(last_trail >= 0){path[last_trail] = 0;}
+
+		sceIoChdir(path);
+
+		if(GetFileSize("kprx.prx") == size_kprx){LoadStartModule("kprx.prx");}
+		else{LoadStartModuleBuffer("kprx.prx", kprx, size_kprx);}
+
+		if(sceKernelDevkitVersion() > 0x02070110){
+			if(GetFileSize("iop.prx") == size_iop){LoadStartModule("iop.prx");}
+			else{LoadStartModuleBuffer("iop.prx", iop, size_iop);}
+		}
+
+		if(GetFileSize("intraFont.prx") == size_intraFont){LoadStartModule("intraFont.prx");}
+		else{LoadStartModuleBuffer("intraFont.prx", intraFont, size_intraFont);}
+
+		if(GetFileSize("vlf.prx") == size_vlf){LoadStartModule("vlf.prx");}
+		else{LoadStartModuleBuffer("vlf.prx", vlf, size_vlf);}
+
+		LoadStartModuleDirectory("modules");
+
+		vlfGuiInit(-1, app_main);
+
+		return sceKernelExitDeleteThread(0);
+	}
+	SceUID thid = sceKernelCreateThread("start_thread", start_thread, 0x10, 0x4000, 0, NULL);
+	if (thid < 0)
+		return thid;
+	sceKernelStartThread(thid, NULL, NULL);
+	return 0;
+}
 /*
 	Callbacks
 */
