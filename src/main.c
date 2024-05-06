@@ -16,6 +16,7 @@
 #include <vlf.h>
 #include <pandorafiles.h>
 #include <main.h>
+#include <mbr.h>
 #include <common.h>
 #include <kprx/main.h>
 
@@ -222,8 +223,15 @@ int OnMainMenuSelect(int sel)
 		else if(sel == 1){EraseIPL();} // show ipl erase menu
 		else if(sel == 2){mode = "Check Memory Stick Information";ResetScreen(1, 1, 0);} // show memory stick check menu
 		else if(sel == 3){mode = "Extract Memory Stick Data";ResetScreen(1, 1, 0);} // show extraction menu
-		else if(sel == 4){FormatMS("PANDORA", 1024);} // format the memory stick
-		else if(sel == 5){mode = "Create Magic Memory Stick";ResetScreen(1, 1, 0);} // show magic memory stick menu
+		else if(sel == 4){FormatMS("PANDORA", 1024, -1);} // format the memory stick
+
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
+			if(sel == 5){FormatMS("PANDORA", 1024, 1);} // format the Internal Storage
+			else if(sel == 6){mode = "Create Magic Memory Stick";ResetScreen(1, 1, 0);} // show magic memory stick menu
+		}
+		else {
+			if(sel == 5){mode = "Create Magic Memory Stick";ResetScreen(1, 1, 0);} // show magic memory stick menu
+		}
 	}
 	else if(mode == "Battery Options"){
 		mode = "Battery Options.1";
@@ -308,13 +316,25 @@ void MainMenu(int sel)
 		selitem = 0;
 	}
 	else if(mode == "Memory Stick Options"){
-		char *items[] ={"Inject IPL to Memory Stick",
+		if (kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
+			char *items[] ={"Inject IPL to Memory Stick",
+						"Erase IPL from Memory Stick",
+						"Check Memory Stick Information",
+						"Extract Memory Stick Data",
+						"Format Memory Stick",
+						"Format Internal Storage (EXPERIMENTAL)",
+						"Create Magic Memory Stick"};
+			vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+		}
+		else {
+			char *items[] ={"Inject IPL to Memory Stick",
 						"Erase IPL from Memory Stick",
 						"Check Memory Stick Information",
 						"Extract Memory Stick Data",
 						"Format Memory Stick",
 						"Create Magic Memory Stick"};
-		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+			vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+		}
 		selitem = 1;
 	}
 	else if(mode == "Battery Options"){
@@ -1991,13 +2011,29 @@ void CheckSysInfoP3()
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "Baryon: 0x%08X", pspGetBaryonVersion());
 	vlf_texts[3] = vlfGuiAddTextF(30, 155, "Pommel: 0x%08X", pspGetPommelVersion());
 
-	if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5)
+	if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
 		vlf_texts[4] = vlfGuiAddTextF(230, 80, "BT MAC: %s", GetBTMAC(big_buffer));
-	else
-		vlf_texts[4] = vlfGuiAddTextF(230, 80, "UMD Drive Firmware: %s", GetUMDFW(big_buffer));
-	vlf_texts[5] = vlfGuiAddTextF(230, 105, "Fuse Id: 0x%llX", pspGetFuseId());
-	vlf_texts[6] = vlfGuiAddTextF(230, 130, "Fuse Config: 0x%08X", pspGetFuseConfig());
-	vlf_texts[7] = vlfGuiAddTextF(230, 155, "NAND Seed: 0x%08X", pspNandGetScramble());
+		vlf_texts[5] = vlfGuiAddTextF(230, 105, "Fuse Id: 0x%llX", pspGetFuseId());
+		vlf_texts[6] = vlfGuiAddTextF(230, 130, "Fuse Config: 0x%08X", pspGetFuseConfig());
+		vlf_texts[7] = vlfGuiAddTextF(230, 155, "NAND Seed: 0x%08X", pspNandGetScramble());
+	}
+	else {
+		u32 tachyon = pspGetTachyonVersion();
+		u32 baryon = pspGetBaryonVersion();
+		if(kuKernelGetModel() == 10 || (tachyon == 0x00500000 && baryon == 0x00243000)) {
+			vlf_texts[4] = vlfGuiAddTextF(235, 80, "UMD Drive Firmware: %s", GetUMDFW(big_buffer));
+			vlf_texts[5] = vlfGuiAddTextF(235, 105, "Fuse Id: 0x%llX", pspGetFuseId());
+			vlf_texts[6] = vlfGuiAddTextF(235, 130, "Fuse Config: 0x%08X", pspGetFuseConfig());
+			vlf_texts[7] = vlfGuiAddTextF(235, 155, "NAND Seed: 0x%08X", pspNandGetScramble());
+		}
+		else {
+			vlf_texts[4] = vlfGuiAddTextF(230, 80, "UMD Drive Firmware: %s", GetUMDFW(big_buffer));
+			vlf_texts[5] = vlfGuiAddTextF(230, 105, "Fuse Id: 0x%llX", pspGetFuseId());
+			vlf_texts[6] = vlfGuiAddTextF(230, 130, "Fuse Config: 0x%08X", pspGetFuseConfig());
+			vlf_texts[7] = vlfGuiAddTextF(230, 155, "NAND Seed: 0x%08X", pspNandGetScramble());
+		}
+
+	}
 }
 void CheckSysInfoP4()
 {
@@ -2016,11 +2052,19 @@ void CheckSysInfoP4()
 
 	vlf_texts[0] = vlfGuiAddTextF(30, 80, "Kirk Version: %c%c%c%c", kirk[3], kirk[2], kirk[1], kirk[0]);
 	vlf_texts[2] = vlfGuiAddTextF(30, 130, "WLAN Status: %s", sceWlanGetSwitchState() == 0 ? "Off":"On");
-	vlf_texts[3] = vlfGuiAddTextF(30, 155, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+	if(kuKernelGetModel() == 10)
+		vlf_texts[3] = vlfGuiAddTextF(30, 155, "MAC: N/A");
+	else
+		vlf_texts[3] = vlfGuiAddTextF(30, 155, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+
 
 	vlf_texts[4] = vlfGuiAddTextF(230, 80, "NAND Size: %i MB", (pspNandGetPageSize() * pspNandGetPagesPerBlock() * pspNandGetTotalBlocks()) / 1024 / 1024);
 	vlf_texts[5] = vlfGuiAddTextF(230, 105, "Time Machine Running: %s", tmmode == 0 ? "No":"Yes");
 	vlf_texts[6] = vlfGuiAddTextF(230, 130, GetHENVersion() == 0 ? "HEN Version: Not Running":"HEN Version: ChickHEN R%i", GetHENVersion());
+	if(kuKernelGetModel() != 4 && kuKernelGetModel() != 5) {
+		u8 *umddc = UMDDateCode(big_buffer);
+		vlf_texts[7] = vlfGuiAddTextF(230, 155, "UMD Date Code: %c%c%c %c%c, %c%c%c%c", umddc[6], umddc[7], umddc[8], umddc[9], umddc[10], umddc[13], umddc[14], umddc[15], umddc[16]);
+	}
 }
 int SetBackground()
 {
@@ -2077,7 +2121,8 @@ void LoadWave()
 		vlfGuiSetModelWorldMatrix(&matrix);
 	}
 }
-void FormatMS(char *msname, int iplreservedspace)
+
+void FormatMS(char *msname, int iplreservedspace, int internal)
 {
 	/*
 		MBR Layout
@@ -2111,10 +2156,16 @@ void FormatMS(char *msname, int iplreservedspace)
 	int cont = vlfGuiMessageDialog("Do you want to format the Memory Stick?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
 	if(cont != 1){OnBackToMainMenu(0);return;}
 
-	cont = vlfGuiMessageDialog("All data on the Memory Stick will be deleted.\nAre you sure you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+	if(internal>0)
+		cont = vlfGuiMessageDialog("All data on the Internal Storage will be deleted.\nAre you sure you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+	else
+		cont = vlfGuiMessageDialog("All data on the Memory Stick will be deleted.\nAre you sure you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
 	if(cont != 1){OnBackToMainMenu(0);return;}
 
-	SetStatus(0, 0, 20, 120, VLF_ALIGNMENT_LEFT, "Formatting...\nDo not remove the Memory Stick or turn off the power.");
+	if(internal>0)
+		SetStatus(0, 0, 20, 120, VLF_ALIGNMENT_LEFT, "Formatting...\nDo not turn off the power.");
+	else
+		SetStatus(0, 0, 20, 120, VLF_ALIGNMENT_LEFT, "Formatting...\nDo not remove the Memory Stick or turn off the power.");
 
 	if(strlen(msname) > 11){memcpy(big_buffer+0x2B, msname, 11);memcpy(big_buffer+0x40000, msname, 11);} // patch in the memory stick name
 	else{memcpy(big_buffer+0x2B, msname, strlen(msname));memcpy(big_buffer+0x40000, msname, strlen(msname));}
@@ -2124,18 +2175,41 @@ void FormatMS(char *msname, int iplreservedspace)
 	big_buffer[41] = Rand(0, 0xFF);
 	big_buffer[42] = Rand(0, 0xFF);
 
-	read = ReadFile("msstor:", 0, mbr, 512); // read the current mbr
-	if(read != 512){ErrorReturn("Unable to read the MBR from the Memory Stick");return;}
+	if(internal>0) {
+		read = ReadFile("eflash0a0f:", 0, mbr, 512); // read the current mbr
+		if(read != 512){
+			int cont = vlfGuiMessageDialog("No MBR was found using a fake mbr instead\nAre you sure you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+			if (cont != 1){OnBackToMainMenu(0);return;}
+			else {sceIoRead(mbr, fake_mbr, size_fake_mbr);}
+			//ErrorReturn("Unable to read the MBR from the Internal Storage");
+			//return;
+		}
+	}
+	else {
+		read = ReadFile("msstor:", 0, mbr, 512); // read the current mbr
+		if(read != 512){ErrorReturn("Unable to read the MBR from the Memory Stick");return;}
+	}
 	old_partpreceed = (mbr[454] & 0xFF) + ((mbr[455] & 0xFF)*0x100) + ((mbr[456] & 0xFF)*0x10000) + ((mbr[457] & 0xFF)*0x1000000);
 
-	read = ReadFile("msstor:", old_partpreceed * 512, bootrecord, 512);
-	if(read < 0){ErrorReturn("Unable to read the Boot Record from the Memory Stick");return;}
+	if(internal>0) {
+		read = ReadFile("eflash0a0f:", old_partpreceed * 512, bootrecord, 512);
+		if(read < 0){
+			int cont = vlfGuiMessageDialog("No MBR was found using a fake mbr instead\nAre you REALLY sure you want to continue?", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_YESNO|VLF_MD_INITIAL_CURSOR_NO);
+			if (cont != 1){OnBackToMainMenu(0);return;}
+			//ErrorReturn("Unable to read the Boot Record from the Internal Storage");
+			//return;
+		}
+	}
+	else {
+		read = ReadFile("msstor:", old_partpreceed * 512, bootrecord, 512);
+		if(read < 0){ErrorReturn("Unable to read the Boot Record from the Memory Stick");return;}
+	}
 	old_partsize = (bootrecord[32] & 0xFF) + ((bootrecord[33] & 0xFF)*0x100) + ((bootrecord[34] & 0xFF)*0x10000) + ((bootrecord[35] & 0xFF)*0x1000000);
 
 	new_partpreceed = (iplreservedspace * 2) + 16;
 	new_partsize = old_partsize + old_partpreceed - new_partpreceed - 64;
 
-	tmp = (old_partsize * 512) / 1024 / 1024; // get a mew cluster size
+	tmp = (old_partsize * 512) / 1024 / 1024; // get a new cluster size
 	new_partclustersize = 0x28;
 	if(tmp > 55){new_partclustersize = 0x10;}
 	if(tmp > 110){new_partclustersize = 0x20;}
@@ -2161,33 +2235,37 @@ void FormatMS(char *msname, int iplreservedspace)
 	big_buffer[34] = (new_partsize & 0xFF0000) / 0x10000;
 	big_buffer[35] = (new_partsize & 0xFF000000) / 0x1000000;
 
-	int out = sceIoOpen("msstor:", PSP_O_RDONLY|PSP_O_WRONLY, 0777); // open the ms for writing
+	int out = -1;
+	if(internal>0) {
+		out = sceIoOpen("eflash0a0f:", PSP_O_RDONLY|PSP_O_WRONLY, 0777); // open the ms for writing
+		written = sceIoWrite(out, mbr, 512); // write the new mbr
+		if(written != 512){ErrorReturn("Failure writing the MBR to the Internal Storage");return;}
+	}
+	else {
+		out = sceIoOpen("msstor:", PSP_O_RDONLY|PSP_O_WRONLY, 0777); // open the ms for writing
+		written = sceIoWrite(out, mbr, 512); // write the new mbr
+		if(written != 512){SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Failure writing the MBR to the Memory Stick");}
+	}
 
-	written = sceIoWrite(out, mbr, 512); // write the new mbr
-	if(written != 512){SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Failure writing the MBR to the Memory Stick");}
 
 	seeked = sceIoLseek(out, new_partpreceed * 512, SEEK_SET);
-	if(seeked != new_partpreceed * 512){SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Failure seeking to the new partition start");}
+	if(seeked != new_partpreceed * 512){ErrorReturn("Failure seeking to the new partition start");return;}
 
 	//new_partstartsize
 	written = sceIoWrite(out, big_buffer, new_partstartsize);
-	if(written != new_partstartsize){SetStatus(0, 0, 240, 120, VLF_ALIGNMENT_CENTER, "Failure writing the Partition Start Blocks to the Memory Stick");}
+	if(written != new_partstartsize){ErrorReturn("Failure writing the Partition Start Blocks to the Memory Stick");return;}
+
 
 	sceIoClose(out);
 
-	/*
-	// This kills the PSP, so yeah.... lets not do it for now.
-	int i = 0;
-	for(;i<sizeof(Directories)/sizeof(Directories[0]);i++){
-		int res = sceIoMkdir(Directories[i], 0777);
-		if(res < 0) {
-			char err[64];
-			sprintf(err, "%s: %s" "Failed to make", Directories[i]);
-			vlfGuiMessageDialog(err, VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
-		}
+	//if(createDirs() < 0)
+		//vlfGuiMessageDialog("Failed to create directories.", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+	
+	if(internal>0) {
+		vlfGuiMessageDialog("Format completed. Please use Format Setting to format back to fat32 in System Settings.", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
 	}
-	*/
-
-	vlfGuiMessageDialog("Format completed. The game will now exit to reduce the risk of system instability.", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+	else {
+		vlfGuiMessageDialog("Format completed. The game will now exit to reduce the risk of system instability.", VLF_MD_TYPE_NORMAL|VLF_MD_BUTTONS_NONE);
+	}
 	sceKernelExitGame();
 }

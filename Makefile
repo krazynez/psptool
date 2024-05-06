@@ -1,6 +1,12 @@
+.ONESHELL:
 all:
 	$(MAKE) -C src/kprx
-	$(MAKE) -C src
+	-rm -rf src/data/files.zip
+	-pushd src/data/
+	-zip -r files.zip *
+	-popd
+	pwd
+	$(MAKE) -C src/
 	@mkdir -p "PSP/GAME/PSP Tool/" | true
 	@cp src/EBOOT.PBP "PSP/GAME/PSP Tool/"
 	@printf "\n\nDone. Copy PSP dir to PSP Memory Stick\n\n"

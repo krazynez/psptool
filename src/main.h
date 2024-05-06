@@ -25,25 +25,6 @@ int CheckSysInfo(int page);
 void CheckSysInfoP1();
 void CheckSysInfoP2();
 
-char *Directories[] = {
-	"ms0:/ISO",
-	"ms0:/ISO/VIDEO",
-	"ms0:/MP_ROOT",
-	"ms0:/MP_ROOT/100MNV01",
-	"ms0:/MP_ROOT/101ANV01",
-	"ms0:/MUSIC",
-	"ms0:/PICTURE",
-	"ms0:/PSP",
-	"ms0:/PSP/COMMON",
-	"ms0:/PSP/GAME",
-	"ms0:/PSP/RSSCH",
-	"ms0:/PSP/RSSCH/IMPORT",
-	"ms0:/PSP/SAVEDATA",
-	"ms0:/PSP/SYSTEM",
-	"ms0:/PSP/THEME",
-	"ms0:/seplugins",
-	"ms0:/VIDEO"
-};
 char *Quotes[] = {
 	"42 of course!",
 	"ARK-4 Team was here....",

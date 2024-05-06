@@ -6,6 +6,7 @@
 #include <pspsysmem.h>
 #include <pspctrl.h>
 #include <pspidstorage.h>
+#include <pspiofilemgr.h>
 #include <pspnet.h>
 #include <pspnet_adhoc.h>
 #include <pspnet_adhocctl.h>
@@ -685,7 +686,7 @@ char *GetMotherboard(char *buf)
 	else if((tachyon == 0x00810000 && baryon == 0x00324000)) sprintf(buf, "TA-094v2");
 
 
-	else if((tachyon == 0x00900000 && baryon == 0x00403000)) sprintf(buf, "TA-096/097");
+	else if((tachyon == 0x00900000 && baryon == 0x00403000)) sprintf(buf, "TA-096/97");
 
 	else sprintf(buf, "Unk: tachyon: %08X baryon: %08X", tachyon, baryon);
 
@@ -746,6 +747,46 @@ int GetKeyPressKernel(int wait)
 
 	pspSdkSetK1(k1);
 	return btn;
+}
+u8 *UMDDateCode(u8 *buf){
+	u8 param[4] = {0, 0, 0x38, 0};
+	int foundUmd = pspUmdExecInquiryCmd(_sceUmdManGetUmdDrive(0), param, &ai);
+
+	if (foundUmd >= 0) {
+		int i = 0;
+		int len = 0;
+		for(;i<sizeof(ai.sony_spec); i++) {
+			if(ai.sony_spec[i] == 0)
+				len += sprintf(buf+len, "%c", " ");
+			else
+				len += sprintf(buf+len, "%c", ai.sony_spec[i]);
+		}
+		//sprintf(buf, "%c%c%c %c%c, %c%c%c%c", buf[6], buf[7], buf[8], buf[9], buf[10], buf[13], buf[14], buf[15], buf[16]);
+	}
+	else {
+		sprintf(buf, "N/A");
+	}
+
+return buf;
+}
+
+int (*_sceIoMkdir)(char*, int) = NULL;
+int createDirs() {
+	int k1 = pspSdkSetK1(0);
+	 _sceIoMkdir = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForKernel", 0x06A70004);
+	int i = 6;
+	int res = 0;
+	for(;i<sizeof(Directories)/sizeof(Directories[0]);i++){
+		res = _sceIoMkdir(Directories[i], 0777);
+		if(res < 0) {
+			pspSdkSetK1(k1);
+			return res;
+		}
+
+	}
+
+	pspSdkSetK1(k1);
+	return 1;
 }
 int StopModule(char *modname)
 {
