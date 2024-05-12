@@ -3,6 +3,7 @@
 #include <pspsdk.h>
 #include <pspkernel.h>
 #include <string.h>
+#include <stdio.h>
 #include <pspsysmem.h>
 #include <pspctrl.h>
 #include <pspidstorage.h>
@@ -13,6 +14,7 @@
 #include <psputility_netmodules.h>
 #include <main.h>
 #include <pspnand_driver.h>
+#include <pspumd.h>
 
 #define sceSysregGetFuseId sceSysreg_driver_4F46EEDE
 #define sceSysregGetFuseConfig sceSysreg_driver_8F4F4E96
@@ -409,6 +411,8 @@ void pspReadNandBlock(u32 page, u8 *buffer)
 		buffer += 528;
 	}
 }
+
+
 /*
 	System Information
 */
@@ -512,7 +516,346 @@ int pspGetModel()
 {
 	return sceKernelGetModel();
 }
+int (*_sceUmdExecReadMKICmd)(void*, void*, u32, void*) = NULL;
+int (*_sceIoWrite)(int, void*, int) = NULL;
+int (*_sceIoOpen)(char*, int, int) = NULL;
+int (*_sceIoClose)(int) = NULL;
+int (*_sceUmdActivate)(int, char*) = NULL;
+int (*_sceUmdDeactivate)(int, char*) = NULL;
+int (*_sceUmdWaitDriveStat)(int) = NULL;
+int (*_sceUmdCheckMedium)(void) = NULL;
+int (*_sceKernelDcacheInvalidateRange)(void*, int) = NULL;
+int UMDMKIDump(u8 *buf, u8 *sb) {
+	int k1 = pspSdkSetK1(0);
 
+	_sceKernelDcacheInvalidateRange = (void *)sctrlHENFindFunction("sceSystemMemoryManager", "UtilsForUser", 0xBFA98062);
+	_sceUmdExecReadMKICmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x6D17FD57);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+	if(ret >= 0) {
+		_sceKernelDcacheInvalidateRange(buf, 0x8000);
+		_sceKernelDcacheInvalidateRange(sb, 0x60);
+		sb[2] = 8;
+		ret = _sceUmdExecReadMKICmd(pspUmdManGetUmdDrive(0), sb, 8, buf);
+		if(ret>=0) {
+
+			int umdmkip1 = _sceIoOpen("ms0:/umd_master_key_index_mki.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(umdmkip1, buf, 0x8000);
+			_sceIoClose(umdmkip1);
+
+			int umdmkip2 = _sceIoOpen("ms0:/umd_master_key_index_key.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(umdmkip2, sb, 0x60);
+			_sceIoClose(umdmkip2);
+
+			_sceUmdDeactivate(1, "disc0:");
+
+			pspSdkSetK1(k1);
+			return 1;
+		}
+		else {
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return ret;
+		}
+	}
+	else {
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return -1;
+	}
+	
+}
+int (*_sceUmdManGetDiscInfo)(void*) = NULL;
+int (*_sceUmdManGetDiscInfo4VSH)(void*) = NULL;
+int UMDDumpDiscInfo() {
+
+	int k1 = pspSdkSetK1(0);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdManGetDiscInfo = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x78287331);
+	_sceUmdManGetDiscInfo4VSH = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0xB8DC7B48);
+
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		ret = _sceUmdManGetDiscInfo(&discinfo);
+		int di = _sceIoOpen("ms0:/umd_discinfo.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+		_sceIoWrite(di, &discinfo, sizeof(discinfo));
+		_sceIoClose(di);
+
+		memset(&discinfo, 0, sizeof(discinfo));
+
+		ret = _sceUmdManGetDiscInfo4VSH(&discinfo);
+		if(ret >= 0) {
+			int di4vsh = _sceIoOpen("ms0:/umd_discinfo_4_vsh.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(di4vsh, &discinfo, sizeof(discinfo));
+			_sceIoClose(di4vsh);
+
+		}
+		else {
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return -2;
+		}
+
+
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return 1;
+	}
+	else {
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return -1;
+	}
+
+}
+
+int (*_sceUmdManGetInquiry)(void*, int, char*) = NULL;
+int UMDDumpInquiry(u8 *buf) {
+	int k1 = pspSdkSetK1(0);
+	memset(buf, 0, sizeof(buf));
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdManGetInquiry = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0xE779ECEF);
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		int ret = _sceUmdManGetInquiry(pspUmdManGetUmdDrive(0), 56, buf);
+		if(ret >= 0) {
+			int inq = _sceIoOpen("ms0:/umd_inquiry.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(inq, buf, 0x38);
+			_sceIoClose(inq);
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return 1;
+		}
+		else {
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return -1;
+		}
+	}
+	else {
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return -1;
+	}
+
+
+}
+int (*_sceUmdExecReadCapacityCmd)(int, void*, int, char*)=NULL;
+int UMDDumpCap(u8 *buf) {
+	int k1 = pspSdkSetK1(0);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdExecReadCapacityCmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0xCC40BED8);
+	memset(buf, 0, sizeof(buf));
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		ret = _sceUmdExecReadCapacityCmd(0x25, pspUmdManGetUmdDrive(0), 8, buf);
+		int cap = _sceIoOpen("ms0:/umd_capacity.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+		_sceIoWrite(cap, buf, sizeof(buf));
+		_sceIoClose(cap);
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return 1;
+	}
+	else {
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return -1;
+	}
+		
+
+
+}
+int (*_sceUmdExecReadUMDStructureCmd)(void*, char*, char*) = NULL;
+int UMDDumpStruct(u8 *buf) {
+	int k1 = pspSdkSetK1(0);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdExecReadUMDStructureCmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x406E8F99);
+	memset(buf, 0, sizeof(buf));
+
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		buf[9] = 8;
+		ret = _sceUmdExecReadUMDStructureCmd(pspUmdManGetUmdDrive(0), buf, &buf[12]);
+		if(ret >= 0) {
+			int _struct = _sceIoOpen("ms0:/umd_structure.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(_struct, buf, 2064);
+			_sceIoClose(_struct);
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return 1;
+		}
+		else {
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return -1;
+		}
+
+	}
+	_sceUmdDeactivate(1, "disc0:");
+	pspSdkSetK1(k1);
+	return -2;
+}
+/** DOES NOT WORK ON 6.6X KERNEL seems to be fully missing **/
+/*int (*_sceUmdExecMechaStatCmd)(void*, int, void*)=NULL;
+int UMDDumpMecha() {
+	int k1 = pspSdkSetK1(0);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdExecMechaStatCmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x27C1869A);
+	u8 *buf2[16];
+	memset(buf2, 0, sizeof(buf2));
+
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		ret = _sceUmdExecMechaStatCmd(pspUmdManGetUmdDrive(0), 16, buf2);
+		if(ret >= 0) {
+			int mecha = _sceIoOpen("ms0:/umd_mecha.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(mecha, buf2, 16);
+			_sceIoClose(mecha);
+			pspSdkSetK1(k1);
+			return 1;
+		}
+		else {
+			pspSdkSetK1(k1);
+			return -1;
+		}
+
+	}
+	pspSdkSetK1(k1);
+	return -2;
+}
+*/
+int (*_sceUmdExecGetMediaInfoCmd)(void*, int, void*)=NULL;
+int UMDDumpMediaInfo() {
+	int k1 = pspSdkSetK1(0);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoWrite = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x42EC03AC);
+	_sceIoClose = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x810C4BC3);
+	_sceIoOpen = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x109F50BC);
+	_sceUmdActivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xC6183D47);
+	_sceUmdDeactivate = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0xE83742BA);
+	_sceUmdWaitDriveStat = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmdUser", 0x8EF08FCE);
+	_sceUmdCheckMedium = (void *)sctrlHENFindFunction("sceUmd_driver", "sceUmd", 0xA9B5B972);
+	_sceUmdExecGetMediaInfoCmd = (void *)sctrlHENFindFunction("sceUmdMan_driver", "sceUmdMan_driver", 0x27C1869A);
+	u8 *buf2[2];
+	memset(buf2, 0, sizeof(buf2));
+
+	int i = _sceUmdCheckMedium();
+	if(i == 0)
+	{
+	   _sceUmdWaitDriveStat(PSP_UMD_PRESENT);
+	}
+	
+	_sceUmdActivate(1, "disc0:");
+	int ret = _sceUmdWaitDriveStat(PSP_UMD_READY);
+
+	if(ret >= 0) {
+		ret = _sceUmdExecGetMediaInfoCmd(pspUmdManGetUmdDrive(0), 2, buf2);
+		if(ret >= 0) {
+			int mediainfo = _sceIoOpen("ms0:/umd_media_info.bin", PSP_O_WRONLY | PSP_O_TRUNC | PSP_O_CREAT, 0777);
+			_sceIoWrite(mediainfo, buf2, 2);
+			_sceIoClose(mediainfo);
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return 1;
+		}
+		else {
+			_sceUmdDeactivate(1, "disc0:");
+			pspSdkSetK1(k1);
+			return -1;
+		}
+
+	}
+	else {
+		_sceUmdDeactivate(1, "disc0:");
+		pspSdkSetK1(k1);
+		return -2;
+	}
+}
 int GetHardwareRevision()
 {
 	u32 tachyon = pspGetTachyonVersion();
@@ -525,8 +868,8 @@ int GetHardwareRevision()
 	else if((tachyon == 0x00140000 && baryon == 0x00030600)) return 0x010102; // TA-079v3
 	else if((tachyon == 0x00200000 && baryon == 0x00030600)) return 0x010103; // TA-079v4
 	else if((tachyon == 0x00200000 && baryon == 0x00040600)) return 0x010104; // TA-079v4
-	else if((tachyon == 0x00300000 && baryon == 0x00040600)) return 0x010200; // TA-081v1
-	else if((tachyon == 0x00300000 && baryon == 0x00040600) && pspGetPommelVersion() == 0x00000104) return 0x010200; // TA-081v2
+	else if((tachyon == 0x00300000 && baryon == 0x00040600) && pspGetPommelVersion() == 0x00000103) return 0x010200; // TA-081v1
+	else if((tachyon == 0x00300000 && baryon == 0x00040600) && pspGetPommelVersion() == 0x00000104) return 0x010201; // TA-081v2
 	else if((tachyon == 0x00400000 && baryon == 0x00114000)) return 0x010300; // TA-082
 	else if((tachyon == 0x00400000 && baryon == 0x00121000)) return 0x010400; // TA-086
 
@@ -557,6 +900,8 @@ int GetHardwareRevision()
 																			  
 	return 0xffffff;
 }
+
+
 int GetModel()
 {
 	u8 region[1];
@@ -659,7 +1004,7 @@ char *GetMotherboard(char *buf)
 	else if((tachyon == 0x00140000 && baryon == 0x00030600)) sprintf(buf, "TA-079v3");
 	else if((tachyon == 0x00200000 && baryon == 0x00030600)) sprintf(buf, "TA-079v4");
 	else if((tachyon == 0x00200000 && baryon == 0x00040600)) sprintf(buf, "TA-079v5");
-	else if((tachyon == 0x00300000 && baryon == 0x00040600)) sprintf(buf, "TA-081v1");
+	else if((tachyon == 0x00300000 && baryon == 0x00040600 && pspGetPommelVersion() == 0x00000103)) sprintf(buf, "TA-081v1");
 	else if((tachyon == 0x00300000 && baryon == 0x00040600 && pspGetPommelVersion() == 0x00000104)) sprintf(buf, "TA-081v2");
 	else if((tachyon == 0x00400000 && baryon == 0x00114000)) sprintf(buf, "TA-082");
 	else if((tachyon == 0x00400000 && baryon == 0x00121000)) sprintf(buf, "TA-086");
@@ -773,7 +1118,7 @@ return buf;
 int (*_sceIoMkdir)(char*, int) = NULL;
 int createDirs() {
 	int k1 = pspSdkSetK1(0);
-	 _sceIoMkdir = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForKernel", 0x06A70004);
+	 _sceIoMkdir = (void *)sctrlHENFindFunction("sceIOFileManager", "IoFileMgrForUser", 0x06A70004);
 	int i = 6;
 	int res = 0;
 	for(;i<sizeof(Directories)/sizeof(Directories[0]);i++){

@@ -78,10 +78,12 @@ static u8 g_dataOut2[2000000] __attribute__((aligned(0x40)));*/
 
 #define BIG_BUFFER_SIZE		10485760
 #define SMALL_BUFFER_SIZE	2000000
+#define EVEN_SMALL_BUFFER_SIZE	0x8000
 
 static u8 big_buffer[BIG_BUFFER_SIZE] __attribute__((aligned(0x40))); 
 static u8 sm_buffer1[SMALL_BUFFER_SIZE] __attribute__((aligned(0x40)));
 static u8 sm_buffer2[SMALL_BUFFER_SIZE] __attribute__((aligned(0x40)));
+static u8 sm_buffer3[0x60];// __attribute__((aligned(0x40)));
 
 enum
 {

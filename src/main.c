@@ -11,6 +11,7 @@
 #include <pspusbdevice.h>
 #include <pspusbstor.h>
 #include <pspusb.h>
+#include <pspumd.h>
 #include <pspopenpsid.h>
 
 #include <vlf.h>
@@ -159,6 +160,8 @@ int OnBackToMainMenu(int enter)
 	if(!enter){
 		if(mode == "USB Connection"){ConnectUSB(0, -1);mode = "Main";}
 		else if(mode == "Memory Stick Options"){mode = "Main";}
+		else if(mode == "UMD Dumping Options"){mode = "Main";}
+		else if(mode == "UMD Dumping Options.1"){mode = "UMD Dumping Options";}
 		else if(mode == "Battery Options"){mode = "Main";}
 		else if(mode == "IdStorage Options"){mode = "Main";}
 		else if(mode == "About"){mode = "Main";}
@@ -204,9 +207,10 @@ int OnMainMenuSelect(int sel)
 	if (mode == "Main"){
 		if(sel == 0){if(FileExists("flash0:/kd/usbdevice.prx") || pspModuleLoaded("pspUsbDev_Driver")){mode = "USB Connection";ResetScreen(1, 1, 0);}else{mode = "USB Connection";ResetScreen(0, 1, 0);ConnectUSB(1, -1);}}
 		else if(sel == 1){mode = "Memory Stick Options";ResetScreen(1, 1, 0);} // show memory stick menu
-		else if(sel == 2){if(pspGetBaryonVersion() >= 0x00234000){ErrorReturn("The PSP hardware does not support reading or writing to the Battery EEPROM.");}else{mode = "Battery Options";ResetScreen(1, 1, 0);}} // show battery menu
-		else if(sel == 3){mode = "IdStorage Options";ResetScreen(1, 1, 0);} // show idstorage menu
-		else if(sel == 4){mode = "About";ResetScreen(1, 1, 0);} // show about menu
+		else if(sel == 2){mode = "UMD Dumping Options";ResetScreen(1, 1, 0);} // show UMD Dump menu
+		else if(sel == 3){if(pspGetBaryonVersion() >= 0x00234000){ErrorReturn("The PSP hardware does not support reading or writing to the Battery EEPROM.");}else{mode = "Battery Options";ResetScreen(1, 1, 0);}} // show battery menu
+		else if(sel == 4){mode = "IdStorage Options";ResetScreen(1, 1, 0);} // show idstorage menu
+		else if(sel == 5){mode = "About";ResetScreen(1, 1, 0);} // show about menu
 	}
 	else if (mode == "USB Connection"){
 		mode = "USB Connection.1";
@@ -216,6 +220,144 @@ int OnMainMenuSelect(int sel)
 		else if(sel == 3){ConnectUSB(1, PSP_USBDEVICE_FLASH2);} // connect flash2 to usb
 		else if(sel == 4){ConnectUSB(1, PSP_USBDEVICE_FLASH3);} // connect flash3 to usb
 		//else if(sel == 5){ConnectUSB(1, PSP_USBDEVICE_UMD9660);} // connect umd disc to usb
+	}
+	else if (mode == "UMD Dumping Options") {
+		mode = "UMD Dumping Options.1";
+		if(sel == 0){
+			mode = "Dump Master Key Index (MKI)";
+			int ret = UMDMKIDump(big_buffer, sm_buffer3);
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("MKI Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+			}
+			else if (ret == -1){
+				ErrorReturn("sceUmdWaitDriveStat Failed...");
+				mode = "UMD Dumping Options";
+				ResetScreen(1, 1, sel);
+			}
+			
+			else if (ret == -3){
+				ErrorReturn("sceUmdCheckMedium failed...");
+				mode = "UMD Dumping Options";
+				ResetScreen(1, 1, sel);
+			}
+			else{
+				ErrorReturn("Failed to Dump MKI...\n0x%X", ret);
+				mode = "UMD Dumping Options";
+				ResetScreen(1, 1, sel);
+			}
+		}
+		else if(sel == 1){
+			mode = "Dump Disc Info";
+			int ret = UMDDumpDiscInfo();
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Info Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+			}
+			else if(ret == -1){
+				ErrorReturn("sceUmdWaitDriveStat Failed...");
+				mode = "UMD Dumping Options";
+				ResetScreen(1, 1, sel);
+			}
+			else if(ret == -2){
+				ErrorReturn("sceUmdManGetDiscInfo4VSH Failed...");
+				mode = "UMD Dumping Options";
+				ResetScreen(1, 1, sel);
+			}
+		}
+		else if(sel == 2){
+			mode = "Dump Inquiry";
+			int ret = UMDDumpInquiry(sm_buffer3);
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Inquiry Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+				else {
+					ErrorReturn("Disc Inquiry Failed...");
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+
+			}
+		}
+		else if (sel == 3){
+			mode = "Dump Capacity";
+			int ret = UMDDumpCap(sm_buffer3);
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Capacity Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+				else {
+					ErrorReturn("Disc Capacity Failed...");
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+
+			}
+		}
+		else if (sel == 4){
+			mode = "Dump Structure";
+			int ret = UMDDumpStruct(sm_buffer2);
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Structure Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+				else {
+					ErrorReturn("Disc Structure Failed...");
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+
+			}
+		}
+		/*else if (sel == 5){
+			mode = "Dump Mecha";
+			int ret = UMDDumpMecha();
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Mecha Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "Main";
+					ResetScreen(1, 1, 0);
+				}
+				else {
+					ErrorReturn("Disc Mecha Failed...");
+					mode = "Main";
+					ResetScreen(1, 1, 0);
+				}
+
+			}
+		}
+		*/
+		else if (sel == 5){
+			mode = "Dump Media Info";
+			int ret = UMDDumpMediaInfo();
+			if(ret >= 0){
+				int conf = vlfGuiMessageDialog("Disc Media Info Dumped Succesfully...", VLF_MD_TYPE_ERROR|VLF_MD_BUTTONS_NONE);
+				if(conf != 1){
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+				else {
+					ErrorReturn("Disc Media Info Failed...");
+					mode = "UMD Dumping Options";
+					ResetScreen(1, 1, sel);
+				}
+
+			}
+		}
+		
 	}
 	else if(mode == "Memory Stick Options"){
 		mode = "Memory Stick Options.1";
@@ -297,12 +439,24 @@ void MainMenu(int sel)
 	SetTitle("sysconf_plugin", "tex_bar_init_icon", "%s v%i.%02i", module_info.modname, module_info.modversion[1], module_info.modversion[0]);
 
 	if(mode == "Main"){
-		char *items[] ={"USB Connection",
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
+			char *items[] ={"USB Connection",
 						"Memory Stick Options",
 						"Battery Options",
 						"IdStorage Options",
 						"About"};
-		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+			vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+		}
+		else {
+			char *items[] ={"USB Connection",
+						"Memory Stick Options",
+						"UMD Dumping Options",
+						"Battery Options",
+						"IdStorage Options",
+						"About"};
+			vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+		}
+
 	}
 	else if(mode == "USB Connection"){
 		SetTitle("sysconf_plugin", "tex_bar_usb_icon", "%s v%i.%02i", module_info.modname, module_info.modversion[1], module_info.modversion[0]);
@@ -337,6 +491,17 @@ void MainMenu(int sel)
 		}
 		selitem = 1;
 	}
+	else if(mode == "UMD Dumping Options") {
+		char *items[] ={"Dump Master Key Index",
+						"Dump Disc Info",
+						"Dump Inquiry",
+						"Dump Capacity",
+						"Dump Structure",
+						/*"Dump Mecha",*/
+						"Dump Media Info"};
+		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
+		selitem = 2;
+	}
 	else if(mode == "Battery Options"){
 		char *items[] ={"Check Battery Serial",
 						"Backup Battery EEPROM",
@@ -346,20 +511,20 @@ void MainMenu(int sel)
 						"Convert to Service Mode Battery",
 						"Convert to AutoBoot Battery"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
-		selitem = 2;
+		selitem = 3;
 	}
 	else if(mode == "IdStorage Options"){
 		char *items[] ={"Backup IdStorage",
 						"Restore IdStorage"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
-		selitem = 3;
+		selitem = 4;
 	}
 	else if(mode == "About"){
 		SetTitle("video_plugin_videotoolbar.rco", "tex_help_bar_icon", "%s v%i.%02i", module_info.modname, module_info.modversion[1], module_info.modversion[0]);
 		char *items[] ={"System Information",
 						"Software Information"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
-		selitem = 4;
+		selitem = 5;
 	}
 	else if(mode == "Inject IPL to Memory Stick"){
 		char *items[] ={"Inject Time Machine IPL",

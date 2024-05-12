@@ -31,6 +31,12 @@ char *Directories[] = {
 	"ms0:/SEPLUGINS",
 	"ms0:/VIDEO"
 };
+typedef struct {
+	u32 uiSize;
+	u32 uiMediaType;
+} SceUmdDiscInfo;
+SceUmdDiscInfo discinfo = {0, 0};
+
 int ReadSerial(u16* serial);
 int WriteSerial(u16* serial);
 int ReadProm(int address, u16* pdata);
@@ -59,6 +65,13 @@ char *GetMotherboard(char *buf);
 char *GetFWVersion(char *buf);
 u8 *GetMACAddress(u8 *buf);
 u8 *UMDDateCode(u8 *buf);
+int UMDMKIDump(u8 *buf, u8 *sb);
+int UMDDumpDiscInfo(void);
+int UMDDumpInquiry(u8 *buf);
+int UMDDumpCap(u8 *buf);
+int UMDDumpStruct(u8 *buf);
+//int UMDDumpMecha(void);
+int UMDDumpMediaInfo(void);
 
 int pspUtilsBufferCopyWithRange(void *dst, int dstSize, void *src, int srcSize, int cmd);
 int GetKeyPressKernel(int wait);
