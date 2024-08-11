@@ -402,7 +402,8 @@ int OnMainMenuSelect(int sel)
 		else if(sel == 2){InjectIPL("IPLs/z3ros0ul Single IPL.bin", 0);} // inject z3ros0ul single ipl
 		else if(sel == 3){InjectIPL("IPLs/z3ros0ul Multi IPL.bin", 0);} // inject z3ros0ul multi ipl
 		else if(sel == 4){InjectIPL("IPLs/Classic Pandora IPL.bin", 0);} // inject classic pandora ipl
-		else if(sel == 5){InjectIPL("ms0:/ipl.bin", 1);} // inject ms0:/ipl.bin
+		else if(sel == 5){InjectIPL("IPLs/aiseirigh.ipl", 0);} // inject Davee's IPL
+		else if(sel == 6){InjectIPL("ms0:/ipl.bin", 1);} // inject ms0:/ipl.bin
 	}
 	else if(mode == "Check Memory Stick Information"){
 		mode = "Check Memory Stick Information.1";
@@ -532,6 +533,7 @@ void MainMenu(int sel)
 						"Inject z3ros0ul Single IPL (Sleep Fix)",
 						"Inject z3ros0ul Multi IPL (Sleep Fix)",
 						"Inject Classic Pandora IPL",
+						"Inject Aiseirigh IPL",
 						"Inject IPL from ms0:/ipl.bin"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
 		selitem = 0;
