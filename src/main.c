@@ -164,6 +164,7 @@ int OnBackToMainMenu(int enter)
 		else if(mode == "UMD Dumping Options.1"){mode = "UMD Dumping Options";}
 		else if(mode == "Battery Options"){mode = "Main";}
 		else if(mode == "IdStorage Options"){mode = "Main";}
+		else if(mode == "IdStorage Options.1"){mode = "IdStorage Options";}
 		else if(mode == "About"){mode = "Main";}
 		else if(mode == "Inject IPL to Memory Stick"){mode = "Memory Stick Options";}
 		else if(mode == "Check Memory Stick Information"){mode = "Memory Stick Options";}
@@ -176,7 +177,6 @@ int OnBackToMainMenu(int enter)
 		else if(mode == "Extract Memory Stick Data.1"){mode = "Extract Memory Stick Data";}
 		else if(mode == "Create Magic Memory Stick.1"){mode = "Create Magic Memory Stick";}
 		else if(mode == "Battery Options.1"){mode = "Battery Options";}
-		else if(mode == "IdStorage Options.1"){mode = "IdStorage Options";}
 		else if(mode == "About.1"){mode = "About";}
 		else{mode == "Main";}
 
@@ -186,8 +186,10 @@ int OnBackToMainMenu(int enter)
 		vlfGuiCancelNextPageControl();
 		vlfGuiSetPageControlEnable(0);
 		
-		if(mode == "Main"){ResetScreen(1, 0, selitem);}
-		else{ResetScreen(1, 1, selitem);}
+		//if(mode == "Main"){ResetScreen(1, 0, selitem);}
+		//else{ResetScreen(1, 1, selitem);}
+		if(mode == "Main"){ResetScreen(1, 0, enter);}
+		else{ResetScreen(1, 1, enter);}
 
 		vlfGuiSetRectangleFade(0, VLF_TITLEBAR_HEIGHT, 480, 272-VLF_TITLEBAR_HEIGHT, VLF_FADE_MODE_IN, VLF_FADE_SPEED_VERY_FAST, 0, NULL, NULL, 0);
 	}
@@ -207,10 +209,17 @@ int OnMainMenuSelect(int sel)
 	if (mode == "Main"){
 		if(sel == 0){if(FileExists("flash0:/kd/usbdevice.prx") || pspModuleLoaded("pspUsbDev_Driver")){mode = "USB Connection";ResetScreen(1, 1, 0);}else{mode = "USB Connection";ResetScreen(0, 1, 0);ConnectUSB(1, -1);}}
 		else if(sel == 1){mode = "Memory Stick Options";ResetScreen(1, 1, 0);} // show memory stick menu
-		else if(sel == 2){mode = "UMD Dumping Options";ResetScreen(1, 1, 0);} // show UMD Dump menu
-		else if(sel == 3){if(pspGetBaryonVersion() >= 0x00234000){ErrorReturn("The PSP hardware does not support reading or writing to the Battery EEPROM.");}else{mode = "Battery Options";ResetScreen(1, 1, 0);}} // show battery menu
-		else if(sel == 4){mode = "IdStorage Options";ResetScreen(1, 1, 0);} // show idstorage menu
-		else if(sel == 5){mode = "About";ResetScreen(1, 1, 0);} // show about menu
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
+			if(sel == 2){mode = "IdStorage Options";ResetScreen(1, 1, 0);} // show idstorage menu
+			else if(sel == 3){mode = "About";ResetScreen(1, 1, 0);} // show about menu
+
+		}
+		else {
+			if(sel == 2){mode = "UMD Dumping Options";ResetScreen(1, 1, 0);} // show UMD Dump menu
+			else if(sel == 3){if(pspGetBaryonVersion() >= 0x00234000){ErrorReturn("The PSP hardware does not support reading or writing to the Battery EEPROM.");}else{mode = "Battery Options";ResetScreen(1, 1, 0);}} // show battery menu
+			else if(sel == 4){mode = "IdStorage Options";ResetScreen(1, 1, 0);} // show idstorage menu
+			else if(sel == 5){mode = "About";ResetScreen(1, 1, 0);} // show about menu
+		}
 	}
 	else if (mode == "USB Connection"){
 		mode = "USB Connection.1";
@@ -443,7 +452,6 @@ void MainMenu(int sel)
 		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5) {
 			char *items[] ={"USB Connection",
 						"Memory Stick Options",
-						"Battery Options",
 						"IdStorage Options",
 						"About"};
 			vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
@@ -501,7 +509,10 @@ void MainMenu(int sel)
 						/*"Dump Mecha",*/
 						"Dump Media Info"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
-		selitem = 2;
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5)
+			selitem = 3;
+		else
+			selitem = 2;
 	}
 	else if(mode == "Battery Options"){
 		char *items[] ={"Check Battery Serial",
@@ -512,7 +523,10 @@ void MainMenu(int sel)
 						"Convert to Service Mode Battery",
 						"Convert to AutoBoot Battery"};
 		vlfGuiCentralMenu(sizeof(items) / sizeof(items[0]), items, sel, OnMainMenuSelect, 0, 0);
-		selitem = 3;
+		if(kuKernelGetModel() == 4 || kuKernelGetModel() == 5)
+			selitem = 4;
+		else
+			selitem = 3;
 	}
 	else if(mode == "IdStorage Options"){
 		char *items[] ={"Backup IdStorage",
